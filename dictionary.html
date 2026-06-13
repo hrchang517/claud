@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LexiLearn — AI English Dictionary</title>
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #0c0e1a;
+  --bg2:      #10132040;
+  --surf:     #161928;
+  --surf2:    #1e2238;
+  --surf3:    #252a45;
+  --border:   #2a2f52;
+  --border2:  #363d66;
+  --acc:      #7c6ff7;
+  --acc2:     #a78bfa;
+  --acc3:     #60a5fa;
+  --gold:     #f59e0b;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --txt:      #e2e6f8;
+  --txt2:     #8892b8;
+  --txt3:     #4d5580;
+  --r:        14px;
+  --shadow:   0 8px 32px rgba(0,0,0,.55);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── SCREENS ─────────────────────────────────────────────────────────────── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── NOISE TEXTURE BG ────────────────────────────────────────────────────── */
+.noise::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");
+  opacity: .4;
+}
+
+/* ── GLOW ────────────────────────────────────────────────────────────────── */
+.glow-orb {
+  position: fixed; border-radius: 50%; filter: blur(120px);
+  pointer-events: none; z-index: 0;
+}
+.glow-1 { width: 600px; height: 600px; background: #4338ca22; top: -200px; left: -100px; }
+.glow-2 { width: 500px; height: 500px; background: #6d28d922; bottom: -100px; right: -100px; }
+
+/* ── COMMON COMPONENTS ───────────────────────────────────────────────────── */
+.card {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  border: none; border-radius: 10px; cursor: pointer; font-family: inherit;
+  font-size: .95rem; font-weight: 600; padding: .75rem 1.4rem;
+  transition: all .18s; user-select: none;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--acc), #818cf8);
+  color: #fff;
+}
+.btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+.btn-primary:active { transform: scale(.97); }
+.btn-ghost {
+  background: var(--surf2); color: var(--txt2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { border-color: var(--acc); color: var(--acc2); }
+.input-field {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .85rem 1rem; color: var(--txt);
+  font-size: .95rem; font-family: inherit; outline: none;
+  transition: border-color .2s;
+}
+.input-field:focus { border-color: var(--acc); }
+.input-field::placeholder { color: var(--txt3); }
+.tag {
+  display: inline-flex; align-items: center; gap: .3rem;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 99px; padding: .18rem .65rem;
+  font-size: .75rem; font-weight: 600; color: var(--txt2);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.tag-acc  { background: #3730a322; border-color: #4338ca55; color: var(--acc2); }
+.tag-gold { background: #92400e22; border-color: #b4530055; color: #fcd34d; }
+.tag-green{ background: #06402022; border-color: #05653055; color: #6ee7b7; }
+.tag-red  { background: #7f1d1d22; border-color: #b91c1c55; color: #fca5a5; }
+
+/* ── SPINNER ─────────────────────────────────────────────────────────────── */
+.spinner {
+  display: inline-block; width: 22px; height: 22px;
+  border: 2.5px solid var(--border); border-top-color: var(--acc);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-lg { width: 40px; height: 40px; }
+
+/* ── SKELETON ────────────────────────────────────────────────────────────── */
+.ske {
+  background: linear-gradient(90deg, var(--surf2) 25%, var(--surf3) 50%, var(--surf2) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCREEN 1 — SETUP
+   ════════════════════════════════════════════════════════════════════════════ */
+#screen-setup {
+  align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, #1e1b4b 0%, var(--bg) 65%);
+}
+#screen-setup > * { position: relative; z-index: 1; }
+.brand { text-align: center; margin-bottom: 2.5rem; }
+.brand-name {
+  font-size: 3rem; font-weight: 800; letter-spacing: -1px;
+  background: linear-gradient(135deg, #818cf8, #a78bfa, #60a5fa);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.brand-sub { color: var(--txt2); font-size: 1rem; margin-top: .3rem; }
+.setup-card { padding: 2.5rem; width: 100%; max-width: 460px; }
+.setup-card h2 { font-size: 1.25rem; margin-bottom: .4rem; }
+.setup-card > p { color: var(--txt2); font-size: .875rem; margin-bottom: 1.75rem; line-height: 1.5; }
+.field-label {
+  display: block; font-size: .8rem; font-weight: 600; color: var(--txt2);
+  margin-bottom: .45rem; text-transform: uppercase; letter-spacing: .06em;
+}
+.field-wrap { position: relative; margin-bottom: 1rem; }
+.field-wrap .input-field { padding-right: 3rem; }
+.eye-btn {
+  position: absolute; right: .9rem; top: 50%; transform: translateY(-50%);
+  cursor: pointer; color: var(--txt3); background: none; border: none;
+  font-size: 1.1rem; line-height: 1; padding: 0;
+}
+.setup-models { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.25rem; }
+@media(max-width:480px){ .setup-models { grid-template-columns: 1fr; } }
+.model-hint { font-size: .78rem; color: var(--txt3); margin-top: .25rem; }
+.setup-footer { font-size: .78rem; color: var(--txt3); margin-top: 1.25rem; text-align: center; line-height: 1.6; }
+.setup-footer a { color: var(--acc2); text-decoration: none; }
+.setup-footer a:hover { text-decoration: underline; }
+.divider {
+  display: flex; align-items: center; gap: .75rem;
+  margin: 1.5rem 0; color: var(--txt3); font-size: .8rem;
+}
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCREEN 2 — LEVEL TEST
+   ════════════════════════════════════════════════════════════════════════════ */
+#screen-level {
+  align-items: center; justify-content: flex-start; padding: 2rem 1rem;
+  background: radial-gradient(ellipse 80% 60% at 50% -10%, #1e1b4b 0%, var(--bg) 65%);
+}
+#screen-level > * { position: relative; z-index: 1; }
+.level-top { text-align: center; margin-bottom: 2rem; margin-top: 1rem; max-width: 560px; width: 100%; }
+.level-top h1 { font-size: 1.6rem; font-weight: 700; }
+.level-top p  { color: var(--txt2); font-size: .9rem; margin-top: .35rem; }
+.prog-track {
+  width: 100%; max-width: 560px; height: 5px;
+  background: var(--surf2); border-radius: 99px;
+  overflow: hidden; margin-bottom: 2rem;
+}
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--acc), var(--acc2));
+  border-radius: 99px; transition: width .45s cubic-bezier(.4,0,.2,1);
+}
+.q-card { padding: 2rem; width: 100%; max-width: 560px; }
+.q-meta {
+  font-size: .75rem; font-weight: 700; color: var(--acc2);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem;
+}
+.q-text { font-size: 1.08rem; font-weight: 500; line-height: 1.55; margin-bottom: 1.5rem; }
+.q-fill { background:var(--surf2); border-radius:8px; padding:.3rem .6rem; font-family:monospace; font-style:italic; color:var(--txt2); }
+.q-opts { display: grid; gap: .65rem; }
+.opt {
+  display: flex; align-items: center; gap: .75rem;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .8rem 1rem; cursor: pointer;
+  font-size: .93rem; color: var(--txt); text-align: left;
+  transition: all .18s; font-family: inherit;
+}
+.opt:hover:not(.disabled) { border-color: var(--acc); background: var(--surf2); }
+.opt .opt-key {
+  width: 1.6rem; height: 1.6rem; flex-shrink: 0;
+  background: var(--surf3); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 700; color: var(--txt3);
+}
+.opt.correct { border-color: var(--green); background: #06402018; }
+.opt.correct .opt-key { background: var(--green); color: #fff; }
+.opt.wrong { border-color: var(--red); background: #7f1d1d18; }
+.opt.wrong .opt-key { background: var(--red); color: #fff; }
+.opt.disabled { cursor: default; }
+
+/* Level Result */
+.level-result-card { padding: 2.5rem; width: 100%; max-width: 480px; text-align: center; }
+.level-orb {
+  width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 1.25rem;
+  background: conic-gradient(from 200deg, var(--acc), var(--acc2), var(--acc3), var(--acc));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem; font-weight: 800; color: #fff;
+  box-shadow: 0 0 40px rgba(124,111,247,.45);
+}
+.level-result-card h2 { font-size: 1.5rem; margin-bottom: .5rem; }
+.level-result-card p  { color: var(--txt2); font-size: .9rem; margin-bottom: 1.75rem; line-height: 1.6; max-width: 360px; margin-inline: auto; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   SCREEN 3 — DICTIONARY
+   ════════════════════════════════════════════════════════════════════════════ */
+#screen-dict { background: var(--bg); }
+.topbar {
+  background: var(--surf); border-bottom: 1px solid var(--border);
+  padding: .85rem 1.25rem; display: flex; align-items: center; gap: .85rem;
+  position: sticky; top: 0; z-index: 200; backdrop-filter: blur(12px);
+}
+.topbar-logo {
+  font-size: 1.25rem; font-weight: 800; letter-spacing: -.5px; white-space: nowrap;
+  background: linear-gradient(135deg, var(--acc2), var(--acc3));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.search-box {
+  flex: 1; max-width: 400px; position: relative;
+}
+.search-box input {
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: .6rem .85rem .6rem 2.4rem;
+  color: var(--txt); font-size: .93rem; font-family: inherit;
+  outline: none; width: 100%; transition: border-color .2s;
+}
+.search-box input:focus { border-color: var(--acc); }
+.search-box .s-icon {
+  position: absolute; left: .7rem; top: 50%; transform: translateY(-50%);
+  color: var(--txt3); pointer-events: none; font-size: .95rem;
+}
+.topbar-right { display: flex; align-items: center; gap: .6rem; margin-left: auto; }
+.level-chip {
+  background: linear-gradient(135deg, #3730a3, #5b21b6);
+  color: #c4b5fd; border: 1px solid #4c1d9544;
+  border-radius: 99px; padding: .22rem .75rem;
+  font-size: .78rem; font-weight: 700; cursor: pointer;
+  transition: opacity .2s; white-space: nowrap;
+}
+.level-chip:hover { opacity: .8; }
+.icon-btn {
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 9px;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--txt2); font-size: 1rem; transition: all .18s;
+}
+.icon-btn:hover { border-color: var(--acc2); color: var(--acc2); }
+
+/* MAIN AREA */
+.dict-body { flex: 1; max-width: 960px; margin: 0 auto; width: 100%; padding: 2rem 1.25rem; }
+
+/* WELCOME */
+.welcome { text-align: center; padding: 4rem 1rem; }
+.welcome .w-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+.welcome h2 { font-size: 1.5rem; margin-bottom: .5rem; }
+.welcome p { color: var(--txt2); font-size: .93rem; max-width: 380px; margin: 0 auto .75rem; line-height: 1.6; }
+.chips { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: center; margin-top: 1.25rem; }
+.chip {
+  background: var(--surf); border: 1px solid var(--border); border-radius: 99px;
+  padding: .35rem .9rem; font-size: .85rem; cursor: pointer;
+  color: var(--txt2); transition: all .18s;
+}
+.chip:hover { border-color: var(--acc); color: var(--acc2); background: var(--surf2); }
+.hist-row { margin-bottom: 1.75rem; }
+.hist-label { font-size: .75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--txt3); margin-bottom: .6rem; }
+
+/* RESULT LAYOUT */
+.result-layout {
+  display: grid; grid-template-columns: 1fr 320px;
+  gap: 2rem; align-items: start;
+}
+@media(max-width:720px){
+  .result-layout { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+  .search-box { min-width: 100%; order: 3; }
+}
+.result-main { min-width: 0; }
+.result-aside { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* WORD HEADER */
+.word-hero { margin-bottom: 1.75rem; display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.word-title-block { flex: 1; min-width: 0; }
+.word-title-block h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 800;
+  letter-spacing: -.5px; line-height: 1.1; margin-bottom: .3rem;
+}
+.phonetic { color: var(--txt3); font-family: monospace; font-size: .95rem; margin-bottom: .6rem; }
+.word-tags { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.listen-btn {
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 10px;
+  padding: .55rem 1rem; cursor: pointer; color: var(--txt2); font-family: inherit;
+  font-size: .88rem; display: flex; align-items: center; gap: .4rem;
+  transition: all .2s; white-space: nowrap; align-self: flex-start;
+}
+.listen-btn:hover { border-color: var(--acc2); color: var(--acc2); }
+
+/* SECTION */
+.sec { margin-bottom: 1.75rem; }
+.sec-hd {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--txt3); margin-bottom: .9rem;
+}
+.sec-hd::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* DEFINITION CARDS */
+.def-block {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 1.3rem; margin-bottom: .7rem;
+  position: relative; overflow: hidden;
+}
+.def-block::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background: linear-gradient(180deg, var(--acc), var(--acc2));
+}
+.def-row { display: flex; gap: .7rem; align-items: flex-start; }
+.def-num {
+  flex-shrink: 0; width: 24px; height: 24px; background: var(--acc);
+  border-radius: 6px; display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; font-weight: 800; color: #fff;
+}
+.def-body { flex: 1; min-width: 0; }
+.def-tags { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: .45rem; }
+.def-text { font-size: .97rem; line-height: 1.65; color: var(--txt); }
+.def-examples { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: .5rem; }
+.example-line {
+  font-size: .88rem; font-style: italic; color: var(--txt2);
+  padding-left: .85rem; border-left: 2px solid var(--acc);
+  line-height: 1.55;
+}
+
+/* SYNONYMS */
+.syn-group { margin-bottom: .9rem; }
+.syn-group-name { font-size: .78rem; color: var(--txt3); font-weight: 500; margin-bottom: .45rem; }
+.syn-tags { display: flex; flex-wrap: wrap; gap: .4rem; }
+.syn-tag {
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 8px;
+  padding: .3rem .75rem; font-size: .88rem; cursor: pointer; color: var(--txt2);
+  transition: all .18s;
+}
+.syn-tag:hover { border-color: var(--acc2); color: var(--acc2); background: var(--surf3); }
+.ant-tag {
+  background: #7f1d1d18; border: 1px solid #b91c1c44; border-radius: 8px;
+  padding: .3rem .75rem; font-size: .88rem; cursor: pointer; color: #fca5a5;
+  transition: all .18s;
+}
+.ant-tag:hover { background: #7f1d1d33; }
+
+/* USAGE TIP */
+.tip-box {
+  background: var(--surf); border: 1px solid var(--border);
+  border-left: 3px solid var(--gold); border-radius: var(--r); padding: 1.1rem 1.3rem;
+}
+.tip-box p { font-size: .9rem; color: var(--txt2); line-height: 1.65; }
+.tip-box strong { color: var(--txt); }
+
+/* IMAGE CARD */
+.img-card {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+  aspect-ratio: 4/3;
+  display: flex; align-items: center; justify-content: center;
+}
+.img-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.img-placeholder {
+  color: var(--txt3); font-size: .85rem; text-align: center; padding: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; gap: .6rem;
+}
+.img-loading {
+  color: var(--txt3); font-size: .85rem; text-align: center; padding: 1.5rem;
+  display: flex; flex-direction: column; align-items: center; gap: .8rem;
+}
+
+/* ASIDE CARD */
+.aside-card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem; }
+.aside-card .a-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--txt3); margin-bottom: .4rem; }
+.aside-card .a-val { font-size: 1rem; font-weight: 600; }
+.aside-card .a-sub { font-size: .8rem; color: var(--txt3); margin-top: .2rem; }
+
+/* FREQ BAR */
+.freq-bar { height: 5px; background: var(--surf2); border-radius: 99px; margin-top: .6rem; overflow: hidden; }
+.freq-fill { height: 100%; border-radius: 99px; transition: width .6s ease; }
+
+/* ERROR */
+.error-card {
+  background: #7f1d1d1a; border: 1px solid #b91c1c44;
+  border-radius: var(--r); padding: 1.2rem 1.4rem; color: #fca5a5; font-size: .9rem; line-height: 1.6;
+}
+
+/* SETTINGS PANEL */
+.settings-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500;
+  display: none; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.settings-overlay.open { display: flex; }
+.settings-panel {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: var(--r) var(--r) 0 0;
+  padding: 2rem 1.5rem; width: 100%; max-width: 520px;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.settings-panel h3 { font-size: 1.1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.settings-panel .close-btn { cursor: pointer; color: var(--txt3); font-size: 1.3rem; background: none; border: none; color: var(--txt3); }
+.settings-panel .close-btn:hover { color: var(--txt); }
+.s-field { margin-bottom: 1rem; }
+.s-field label { display: block; font-size: .8rem; font-weight: 600; color: var(--txt2); margin-bottom: .4rem; text-transform: uppercase; letter-spacing: .05em; }
+</style>
+</head>
+<body class="noise">
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+
+<!-- ══ SCREEN 1: SETUP ══════════════════════════════════════════════════════ -->
+<div id="screen-setup" class="screen active">
+  <div class="brand">
+    <div class="brand-name">LexiLearn</div>
+    <div class="brand-sub">AI-powered English dictionary · tailored to your level</div>
+  </div>
+
+  <div class="card setup-card">
+    <h2>Welcome — Let's get started</h2>
+    <p>Enter your Gemini API key to enable word definitions and AI illustrations. Your key is saved only in your browser.</p>
+
+    <label class="field-label">Gemini API Key</label>
+    <div class="field-wrap">
+      <input type="password" class="input-field" id="api-key-input" placeholder="AIzaSy…" autocomplete="off" />
+      <button class="eye-btn" onclick="toggleEye('api-key-input', this)">👁</button>
+    </div>
+
+    <div class="divider">Model Configuration</div>
+    <div class="setup-models">
+      <div>
+        <label class="field-label">Text Model</label>
+        <input type="text" class="input-field" id="text-model-input"
+          value="gemini-2.0-flash" placeholder="gemini-2.0-flash" />
+        <div class="model-hint">For definitions</div>
+      </div>
+      <div>
+        <label class="field-label">Image Model</label>
+        <input type="text" class="input-field" id="img-model-input"
+          value="gemini-2.0-flash-preview-image-generation" placeholder="image model id" />
+        <div class="model-hint">For illustrations</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%" onclick="onSetupContinue()">
+      Continue to Level Check →
+    </button>
+    <div class="setup-footer">
+      Need a free API key?
+      <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio ↗</a>
+      &nbsp;·&nbsp; Your key never leaves this page.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: LEVEL TEST ════════════════════════════════════════════════ -->
+<div id="screen-level" class="screen">
+  <div class="level-top">
+    <h1>📖 Quick Level Check</h1>
+    <p>8 questions to personalize word definitions for you. Only takes ~60 seconds.</p>
+  </div>
+  <div class="prog-track" style="width:100%;max-width:560px">
+    <div class="prog-fill" id="prog" style="width:0%"></div>
+  </div>
+  <div id="q-area" style="width:100%;max-width:560px"></div>
+</div>
+
+<!-- ══ SCREEN 3: DICTIONARY ════════════════════════════════════════════════ -->
+<div id="screen-dict" class="screen">
+  <header class="topbar">
+    <span class="topbar-logo">LexiLearn</span>
+    <div class="search-box">
+      <span class="s-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Search any word…"
+             autocomplete="off" spellcheck="false"
+             onkeydown="if(event.key==='Enter')doSearch()" />
+    </div>
+    <div class="topbar-right">
+      <span class="level-chip" id="level-chip" onclick="retakeTest()" title="Retake level test">B1</span>
+      <div class="icon-btn" onclick="openSettings()" title="Settings">⚙️</div>
+    </div>
+  </header>
+  <div class="dict-body" id="dict-body"></div>
+</div>
+
+<!-- ══ SETTINGS PANEL ═══════════════════════════════════════════════════════ -->
+<div class="settings-overlay" id="settings-overlay" onclick="maybeCloseSettings(event)">
+  <div class="settings-panel">
+    <h3>Settings <button class="close-btn" onclick="closeSettings()">✕</button></h3>
+    <div class="s-field">
+      <label>Gemini API Key</label>
+      <div class="field-wrap">
+        <input type="password" class="input-field" id="s-api-key" />
+        <button class="eye-btn" onclick="toggleEye('s-api-key', this)">👁</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+      <div class="s-field">
+        <label>Text Model</label>
+        <input type="text" class="input-field" id="s-text-model" />
+      </div>
+      <div class="s-field">
+        <label>Image Model</label>
+        <input type="text" class="input-field" id="s-img-model" />
+      </div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:.5rem" onclick="saveSettings()">Save Settings</button>
+    <button class="btn btn-ghost" style="width:100%;margin-top:.6rem" onclick="retakeTest()">Retake Level Test</button>
+  </div>
+</div>
+
+<script>
+/* ── STATE ──────────────────────────────────────────────────────────────── */
+let CFG = {
+  apiKey: '',
+  textModel: 'gemini-2.0-flash',
+  imgModel: 'gemini-2.0-flash-preview-image-generation',
+};
+let USER_LEVEL = 'B1';
+let history = [];
+
+const LEVEL_NAMES = {
+  A1:'Beginner', A2:'Elementary', B1:'Intermediate',
+  B2:'Upper-Intermediate', C1:'Advanced', C2:'Mastery'
+};
+
+/* ── PERSISTENCE ────────────────────────────────────────────────────────── */
+function saveState() {
+  localStorage.setItem('ll_cfg', JSON.stringify(CFG));
+  localStorage.setItem('ll_level', USER_LEVEL);
+  localStorage.setItem('ll_hist', JSON.stringify(history));
+}
+function loadState() {
+  try { const c = localStorage.getItem('ll_cfg'); if(c) CFG = {...CFG, ...JSON.parse(c)}; } catch(e){}
+  try { const l = localStorage.getItem('ll_level'); if(l) USER_LEVEL = l; } catch(e){}
+  try { const h = localStorage.getItem('ll_hist'); if(h) history = JSON.parse(h); } catch(e){}
+}
+
+/* ── SCREEN SWITCHING ───────────────────────────────────────────────────── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ── SETUP ──────────────────────────────────────────────────────────────── */
+function toggleEye(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function onSetupContinue() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key || key.length < 15) {
+    shakeEl('api-key-input'); return;
+  }
+  CFG.apiKey = key;
+  CFG.textModel = document.getElementById('text-model-input').value.trim() || CFG.textModel;
+  CFG.imgModel  = document.getElementById('img-model-input').value.trim()  || CFG.imgModel;
+  saveState();
+  startLevelTest();
+}
+function shakeEl(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'var(--red)';
+  el.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},
+              {transform:'translateX(-3px)'},{transform:'translateX(0)'}],
+             {duration:280, easing:'ease'});
+  setTimeout(() => el.style.borderColor = '', 1500);
+}
+
+/* ── LEVEL TEST ─────────────────────────────────────────────────────────── */
+const QUESTIONS = [
+  { band:'A1', q:'What does "big" mean?',
+    opts:['Large in size','To run quickly','Very cold','A type of food'], correct:0 },
+  { band:'A2', q:'Choose the correct sentence:',
+    opts:['She have a dog.','She has a dog.','She having dog.','She haves dog.'], correct:1 },
+  { band:'B1', q:'What does "postpone" mean?',
+    opts:['To finish early','To cancel forever','To delay to a later time','To do twice'], correct:2 },
+  { band:'B1', q:'Fill in the blank: "Despite the rain, she ___ outside."',
+    opts:['continues walking','continuing to walk','continued to walk','is continue walking'], correct:2 },
+  { band:'B2', q:'Which word means "extremely important or necessary"?',
+    opts:['trivial','optional','crucial','vague'], correct:2 },
+  { band:'B2', q:'What does "ambiguous" mean?',
+    opts:['Very clear and obvious','Open to more than one interpretation','Extremely ambitious','Difficult to accomplish'], correct:1 },
+  { band:'C1', q:'What does "equivocate" mean?',
+    opts:['To speak loudly and clearly','To use vague language to avoid commitment',
+          'To translate between languages','To disagree strongly'], correct:1 },
+  { band:'C2', q:'Which sentence uses "albeit" correctly?',
+    opts:['Albeit he was tired, but he kept going.',
+          'She finished the race, albeit slowly.',
+          'He arrived albeit before the others had.',
+          'Albeit the storm, the boat sailed.'], correct:1 },
+];
+
+let qIdx = 0, qScore = 0;
+
+function startLevelTest() {
+  qIdx = 0; qScore = 0;
+  show('screen-level');
+  renderQ();
+}
+function renderQ() {
+  document.getElementById('prog').style.width = (qIdx/QUESTIONS.length*100)+'%';
+  if (qIdx >= QUESTIONS.length) { showLevelDone(); return; }
+  const q = QUESTIONS[qIdx];
+  const keys = ['A','B','C','D'];
+  document.getElementById('q-area').innerHTML = `
+    <div class="card q-card">
+      <div class="q-meta">Question ${qIdx+1} / ${QUESTIONS.length} &nbsp;·&nbsp; ${q.band} level</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-opts">
+        ${q.opts.map((o,i) => `
+          <button class="opt" onclick="pickOpt(${i})">
+            <span class="opt-key">${keys[i]}</span>
+            ${o}
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+function pickOpt(idx) {
+  const q = QUESTIONS[qIdx];
+  document.querySelectorAll('.opt').forEach((el,i) => {
+    el.classList.add('disabled');
+    if (i === q.correct) el.classList.add('correct');
+    else if (i === idx && idx !== q.correct) el.classList.add('wrong');
+  });
+  if (idx === q.correct) qScore++;
+  setTimeout(() => { qIdx++; renderQ(); }, 800);
+}
+function computeLevel() {
+  const p = qScore / QUESTIONS.length;
+  if (p <= .25) return 'A1';
+  if (p <= .38) return 'A2';
+  if (p <= .50) return 'B1';
+  if (p <= .63) return 'B2';
+  if (p <= .88) return 'C1';
+  return 'C2';
+}
+function showLevelDone() {
+  document.getElementById('prog').style.width = '100%';
+  USER_LEVEL = computeLevel();
+  saveState();
+  document.getElementById('q-area').innerHTML = `
+    <div class="card level-result-card">
+      <div class="level-orb">${USER_LEVEL}</div>
+      <h2>Your Level: ${LEVEL_NAMES[USER_LEVEL]}</h2>
+      <p>
+        We'll use <strong>${USER_LEVEL}-appropriate vocabulary</strong> to explain every word you look up —
+        clear enough to understand, rich enough to learn from.
+      </p>
+      <button class="btn btn-primary" style="width:100%" onclick="enterDict()">
+        Open Dictionary →
+      </button>
+    </div>`;
+}
+function enterDict() {
+  show('screen-dict');
+  document.getElementById('level-chip').textContent = USER_LEVEL;
+  renderWelcome();
+  setTimeout(() => document.getElementById('search-input').focus(), 100);
+}
+function retakeTest() {
+  closeSettings();
+  startLevelTest();
+}
+
+/* ── DICTIONARY ─────────────────────────────────────────────────────────── */
+function doSearch(word) {
+  const w = word || document.getElementById('search-input').value.trim().toLowerCase();
+  if (!w) return;
+  document.getElementById('search-input').value = w;
+  addHistory(w);
+  renderSkeleton(w);
+  fetchAll(w);
+}
+function addHistory(w) {
+  history = [w, ...history.filter(x => x !== w)].slice(0, 12);
+  saveState();
+}
+
+function renderWelcome() {
+  const suggestions = levelWords(USER_LEVEL);
+  const histHtml = history.length ? `
+    <div class="hist-row">
+      <div class="hist-label">Recent</div>
+      <div class="chips">${history.slice(0,8).map(w => `<span class="chip" onclick="doSearch('${w}')">${w}</span>`).join('')}</div>
+    </div>` : '';
+  document.getElementById('dict-body').innerHTML = `
+    ${histHtml}
+    <div class="welcome">
+      <div class="w-icon">📚</div>
+      <h2>Look up any English word</h2>
+      <p>Get Collins-style definitions, grouped synonyms, usage tips, and an AI illustration — all at <strong>${USER_LEVEL} (${LEVEL_NAMES[USER_LEVEL]})</strong> level.</p>
+      <div class="chips">${suggestions.map(w => `<span class="chip" onclick="doSearch('${w}')">${w}</span>`).join('')}</div>
+    </div>`;
+}
+
+function levelWords(lv) {
+  return ({
+    A1:['dog','happy','book','run','house','big','water'],
+    A2:['weather','travel','beautiful','school','family','walk','find'],
+    B1:['explain','discover','challenge','improve','opinion','explore','adventure'],
+    B2:['analyze','significant','perspective','contribute','essential','debate'],
+    C1:['eloquent','ambiguous','profound','pragmatic','meticulous','nuance'],
+    C2:['ephemeral','perspicacious','equanimity','pellucid','sycophant','laconic'],
+  }[lv] || ['discover','challenge','eloquent']).slice(0,6);
+}
+
+function renderSkeleton(word) {
+  document.getElementById('dict-body').innerHTML = `
+    <div class="word-hero">
+      <div class="word-title-block">
+        <div class="ske" style="height:3rem;width:55%;max-width:280px"></div>
+        <div class="ske" style="height:.9rem;width:35%;max-width:160px;margin-top:.5rem"></div>
+        <div class="ske" style="height:1.2rem;width:25%;max-width:120px;margin-top:.6rem;border-radius:99px"></div>
+      </div>
+    </div>
+    <div class="result-layout">
+      <div>
+        <div class="ske" style="height:.7rem;width:30%;margin-bottom:1rem"></div>
+        <div class="ske" style="height:6rem;margin-bottom:.7rem"></div>
+        <div class="ske" style="height:5rem;margin-bottom:.7rem"></div>
+        <div class="ske" style="height:.7rem;width:25%;margin:1.5rem 0 1rem"></div>
+        <div class="ske" style="height:3rem"></div>
+      </div>
+      <div>
+        <div class="img-card"><div class="img-loading"><div class="spinner spinner-lg"></div><span>Generating illustration…</span></div></div>
+      </div>
+    </div>`;
+}
+
+/* ── API CALLS ──────────────────────────────────────────────────────────── */
+async function fetchAll(word) {
+  const [defRes, imgRes] = await Promise.allSettled([
+    fetchDefinition(word),
+    fetchImage(word),
+  ]);
+  const def = defRes.status === 'fulfilled' ? defRes.value : null;
+  const img = imgRes.status === 'fulfilled' ? imgRes.value : null;
+
+  if (!def) {
+    const msg = defRes.reason?.message || 'Unknown error';
+    document.getElementById('dict-body').innerHTML = `
+      <div class="error-card">
+        ⚠️ <strong>Could not fetch "${word}".</strong><br>
+        ${msg}<br><br>
+        Check your API key and model name in ⚙️ Settings.
+      </div>`;
+    return;
+  }
+  renderResult(word, def, img);
+}
+
+async function fetchDefinition(word) {
+  const lvDesc = `${USER_LEVEL} (${LEVEL_NAMES[USER_LEVEL]})`;
+  const prompt = `You are a world-class English dictionary. The learner's level is ${lvDesc}.
+
+Word to define: "${word}"
+
+Reply ONLY with a JSON object — no markdown fences, no extra text:
+{
+  "word": "${word}",
+  "phonetic": "/fəˈnetɪk/",
+  "partOfSpeech": ["noun"],
+  "definitions": [
+    {
+      "pos": "noun",
+      "register": "neutral",
+      "text": "A full Collins-style definition in plain prose. Use ONLY vocabulary appropriate for ${lvDesc}. Do NOT use the word itself. Explain the concept thoroughly in 1–3 sentences.",
+      "examples": [
+        "A natural sentence using the word.",
+        "Another example showing a different context."
+      ]
+    }
+  ],
+  "synonyms": [
+    {"group": "Most common", "words": ["word1","word2","word3"]},
+    {"group": "More formal", "words": ["word4","word5"]}
+  ],
+  "antonyms": ["opposite1","opposite2"],
+  "usageTip": "One practical tip for ${lvDesc} learners: when to use it, common mistakes, or collocations.",
+  "frequency": "very common"
+}
+
+Rules:
+- ENGLISH ONLY — no Korean or other languages
+- "register" must be one of: neutral, formal, informal, literary, archaic, technical
+- "frequency" must be one of: very common, common, uncommon, rare
+- Provide 1–3 definition objects if the word has multiple parts of speech
+- Synonyms must be real, level-appropriate English words`;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${CFG.textModel}:generateContent?key=${CFG.apiKey}`,
+    {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents: [{parts:[{text:prompt}]}],
+        generationConfig: {temperature:.25, maxOutputTokens:1800}
+      })
+    }
+  );
+  if (!res.ok) {
+    const e = await res.json().catch(()=>({}));
+    throw new Error(e.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  let raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  raw = raw.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+  return JSON.parse(raw);
+}
+
+async function fetchImage(word) {
+  const prompt = `A clean, simple, photorealistic illustration that clearly represents the English word "${word}".
+No text, letters, labels, or written words anywhere in the image.
+Style: bright, clear, educational, professional. Simple background.`;
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${CFG.imgModel}:generateContent?key=${CFG.apiKey}`,
+    {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents: [{parts:[{text:prompt}]}],
+        generationConfig: {responseModalities:['IMAGE','TEXT'], temperature:.9}
+      })
+    }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  for (const p of parts) {
+    if (p.inlineData?.mimeType?.startsWith('image/')) {
+      return `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`;
+    }
+  }
+  return null;
+}
+
+/* ── RENDER RESULT ──────────────────────────────────────────────────────── */
+function renderResult(word, d, imgSrc) {
+  const FREQ_WIDTH = {'very common':'90%','common':'65%','uncommon':'38%','rare':'18%'};
+  const FREQ_COLOR = {'very common':'#10b981','common':'#6c63ff','uncommon':'#f59e0b','rare':'#ef4444'};
+  const REG_CLASS  = {formal:'tag-acc',informal:'tag-gold',literary:'tag-green',archaic:'tag-red',technical:'tag-acc'};
+
+  const posTags = (d.partOfSpeech||[]).map(p => `<span class="tag">${p}</span>`).join('');
+  const freqPct = FREQ_WIDTH[d.frequency] || '50%';
+  const freqCol = FREQ_COLOR[d.frequency] || 'var(--acc)';
+
+  const defsHtml = (d.definitions||[]).map((def,i) => {
+    const regCls = REG_CLASS[def.register] || '';
+    const regBadge = (def.register && def.register !== 'neutral')
+      ? `<span class="tag ${regCls}">${def.register}</span>` : '';
+    const exs = (def.examples||[]).map(ex => `<div class="example-line">"${ex}"</div>`).join('');
+    return `
+      <div class="def-block">
+        <div class="def-row">
+          <div class="def-num">${i+1}</div>
+          <div class="def-body">
+            <div class="def-tags">
+              <span class="tag">${def.pos||''}</span>${regBadge}
+            </div>
+            <div class="def-text">${def.text||''}</div>
+            ${exs ? `<div class="def-examples">${exs}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const synsHtml = (d.synonyms||[]).map(g => `
+    <div class="syn-group">
+      <div class="syn-group-name">${g.group}</div>
+      <div class="syn-tags">
+        ${(g.words||[]).map(w => `<span class="syn-tag" onclick="doSearch('${w}')">${w}</span>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const antsHtml = d.antonyms?.length ? `
+    <div class="sec">
+      <div class="sec-hd">Antonyms</div>
+      <div class="syn-tags">
+        ${d.antonyms.map(w => `<span class="ant-tag" onclick="doSearch('${w}')">${w}</span>`).join('')}
+      </div>
+    </div>` : '';
+
+  const imgHtml = imgSrc
+    ? `<img src="${imgSrc}" alt="${word}" loading="lazy">`
+    : `<div class="img-placeholder">
+        <span style="font-size:2rem">🖼</span>
+        <span>Illustration unavailable.<br>Check your image model in ⚙️ Settings.</span>
+       </div>`;
+
+  const histSmall = history.filter(w => w !== word).slice(0,6);
+  const histHtml = histSmall.length ? `
+    <div style="margin-bottom:1.5rem">
+      <div class="chips">${histSmall.map(w => `<span class="chip" onclick="doSearch('${w}')">${w}</span>`).join('')}</div>
+    </div>` : '';
+
+  document.getElementById('dict-body').innerHTML = `
+    ${histHtml}
+    <div class="word-hero">
+      <div class="word-title-block">
+        <h1>${d.word||word}</h1>
+        ${d.phonetic ? `<div class="phonetic">${d.phonetic}</div>` : ''}
+        <div class="word-tags">
+          ${posTags}
+          ${d.frequency ? `<span class="tag" style="color:${freqCol};border-color:${freqCol}44;background:${freqCol}18">${d.frequency}</span>` : ''}
+        </div>
+      </div>
+      <button class="listen-btn" onclick="speak('${word}')">🔊 Listen</button>
+    </div>
+
+    <div class="result-layout">
+      <div class="result-main">
+        <div class="sec">
+          <div class="sec-hd">Definitions</div>
+          ${defsHtml}
+        </div>
+
+        ${synsHtml ? `<div class="sec"><div class="sec-hd">Synonyms</div>${synsHtml}</div>` : ''}
+        ${antsHtml}
+
+        ${d.usageTip ? `
+          <div class="sec">
+            <div class="sec-hd">Usage Tip</div>
+            <div class="tip-box"><p>${d.usageTip}</p></div>
+          </div>` : ''}
+      </div>
+
+      <div class="result-aside">
+        <div class="img-card">${imgHtml}</div>
+
+        <div class="aside-card">
+          <div class="a-label">Frequency</div>
+          <div class="a-val">${d.frequency||'—'}</div>
+          <div class="freq-bar">
+            <div class="freq-fill" style="width:${freqPct};background:${freqCol}"></div>
+          </div>
+        </div>
+
+        <div class="aside-card">
+          <div class="a-label">Your Level</div>
+          <div class="a-val">${USER_LEVEL} — ${LEVEL_NAMES[USER_LEVEL]}</div>
+          <div class="a-sub">Definitions tailored for you</div>
+          <button class="btn btn-ghost" style="width:100%;margin-top:.75rem;font-size:.82rem;padding:.5rem" onclick="retakeTest()">Retake Level Test</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── TTS ────────────────────────────────────────────────────────────────── */
+function speak(word) {
+  if (!window.speechSynthesis) return;
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'en-US'; u.rate = .85;
+  window.speechSynthesis.speak(u);
+}
+
+/* ── SETTINGS PANEL ─────────────────────────────────────────────────────── */
+function openSettings() {
+  document.getElementById('s-api-key').value = CFG.apiKey;
+  document.getElementById('s-text-model').value = CFG.textModel;
+  document.getElementById('s-img-model').value  = CFG.imgModel;
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('open');
+}
+function maybeCloseSettings(e) {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+}
+function saveSettings() {
+  const key = document.getElementById('s-api-key').value.trim();
+  if (!key) { shakeEl('s-api-key'); return; }
+  CFG.apiKey    = key;
+  CFG.textModel = document.getElementById('s-text-model').value.trim() || CFG.textModel;
+  CFG.imgModel  = document.getElementById('s-img-model').value.trim()  || CFG.imgModel;
+  saveState();
+  closeSettings();
+}
+
+/* ── INIT ───────────────────────────────────────────────────────────────── */
+window.addEventListener('load', () => {
+  loadState();
+  if (CFG.apiKey) {
+    document.getElementById('api-key-input').value = CFG.apiKey;
+    document.getElementById('text-model-input').value = CFG.textModel;
+    document.getElementById('img-model-input').value  = CFG.imgModel;
+  }
+  // If we already have key + level, skip setup & test
+  if (CFG.apiKey && localStorage.getItem('ll_level')) {
+    show('screen-dict');
+    document.getElementById('level-chip').textContent = USER_LEVEL;
+    renderWelcome();
+  }
+});
+</script>
+</body>
+</html>
