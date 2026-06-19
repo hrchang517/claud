@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마인드케이 처리 관리</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left h1 { font-size: 28px; color: #333; margin-bottom: 10px; }
+        .header-left p { color: #666; font-size: 14px; }
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .btn-upload {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-upload:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        #fileInput { display: none; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .stat-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .stat-card .label {
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
+        }
+        .controls {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 0;
+        }
+        .search-box {
+            flex: 1;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .filter-group { display: flex; gap: 10px; }
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .filter-btn:hover { border-color: #667eea; }
+        .table-wrapper {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        tbody tr:hover { background-color: #f8f9fa; }
+        .id { color: #667eea; font-weight: 600; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .tbg { background: #cce5ff; color: #004499; }
+        .tnc { background: #e8d5ff; color: #6600cc; }
+        input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            background: #28a745;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .message.error {
+            background: #dc3545;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .spinner {
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @media (max-width: 768px) {
+            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header-right { width: 100%; flex-direction: column; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+            .controls { flex-direction: column; align-items: stretch; }
+            th, td { padding: 10px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>📊 마인드케이 처리 관리 대시보드</h1>
+                <p>고객 처리 현황 및 진행 상태 관리</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-upload" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
+                    📁 Excel 업로드
+                </button>
+                <button class="btn btn-reset" onclick="resetData()">🔄 새로 시작하기</button>
+                <input type="file" id="fileInput" accept=".xlsx,.xls">
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="number">0</div>
+                <div class="label">전체 고객</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">0</div>
+                <div class="label">처리 완료</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">0</div>
+                <div class="label">TBG</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">0</div>
+                <div class="label">TNC</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="고객명, 연락처, 상품으로 검색...">
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="TBG">TBG</button>
+                <button class="filter-btn" data-filter="TNC">TNC</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">번호</th>
+                        <th style="width: 100px;">고객명</th>
+                        <th style="width: 120px;">연락처</th>
+                        <th style="width: 80px;">파트너</th>
+                        <th style="width: 300px;">상품</th>
+                        <th style="width: 200px;">처리 상태</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <p>📋 Excel 파일을 업로드하세요</p>
+                            <p style="font-size: 12px; color: #bbb;">위의 "📁 Excel 업로드" 버튼을 클릭하여 Excel 파일을 선택하세요</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let customers = [];
+        let filteredCustomers = [];
+        let currentFilter = 'all';
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalText = uploadBtn.textContent;
+            uploadBtn.innerHTML = '⏳ 처리 중<span class="loading"><span class="spinner"></span></span>';
+            uploadBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    customers = data.data;
+                    filteredCustomers = [...customers];
+                    renderTable();
+                    updateStats();
+                    showMessage(`✅ ${data.count}명의 고객 정보를 불러왔습니다!`, 'success');
+                } else {
+                    showMessage(`❌ ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('오류:', error);
+                showMessage('❌ 파일 처리 중 오류가 발생했습니다.', 'error');
+            })
+            .finally(() => {
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+                document.getElementById('fileInput').value = '';
+            });
+        });
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (filteredCustomers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>검색 결과가 없습니다</p></td></tr>';
+                return;
+            }
+
+            filteredCustomers.forEach(customer => {
+                const badgeClass = customer.partner === 'TBG' ? 'tbg' : 'tnc';
+                const row = document.createElement('tr');
+
+                // 번호 칼럼: customer.id 그대로 사용 (Excel의 #숫자)
+                // 고객명 칼럼: customer.name 그대로 사용 (순수 이름)
+                row.innerHTML = `
+                    <td><strong style="color: #667eea; font-size: 16px;">${customer.id}</strong></td>
+                    <td><strong>${customer.name}</strong></td>
+                    <td>${customer.phone}</td>
+                    <td><span class="badge ${badgeClass}">${customer.partner}</span></td>
+                    <td style="font-size: 12px; color: #555;">${customer.product}</td>
+                    <td>
+                        <input type="text" value="${customer.status}"
+                               data-id="${customer.id}"
+                               placeholder="상태 입력..."
+                               onchange="updateStatus(this)">
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStatus(input) {
+            const id = input.dataset.id;
+            const customer = customers.find(c => c.id === id);
+            if (customer) {
+                customer.status = input.value;
+            }
+        }
+
+        function updateStats() {
+            const total = customers.length;
+            const completed = customers.filter(c => c.status).length;
+            const tbg = customers.filter(c => c.partner === 'TBG').length;
+            const tnc = customers.filter(c => c.partner === 'TNC').length;
+
+            const stats = document.querySelectorAll('.stat-card');
+            stats[0].querySelector('.number').textContent = total;
+            stats[1].querySelector('.number').textContent = completed;
+            stats[2].querySelector('.number').textContent = tbg;
+            stats[3].querySelector('.number').textContent = tnc;
+        }
+
+        function filterCustomers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredCustomers = customers.filter(customer => {
+                const matchesSearch =
+                    customer.name.toLowerCase().includes(searchTerm) ||
+                    customer.phone.includes(searchTerm) ||
+                    customer.product.toLowerCase().includes(searchTerm) ||
+                    customer.id.includes(searchTerm);
+
+                const matchesFilter = currentFilter === 'all' || customer.partner === currentFilter;
+
+                return matchesSearch && matchesFilter;
+            });
+
+            renderTable();
+        }
+
+        function resetData() {
+            if (confirm('현재 데이터를 모두 삭제하고 새 Excel 파일을 업로드하시겠습니까?')) {
+                customers = [];
+                filteredCustomers = [];
+                document.getElementById('searchInput').value = '';
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-filter="all"]').classList.add('active');
+                currentFilter = 'all';
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>📋 Excel 파일을 업로드하세요</p></td></tr>';
+
+                const stats = document.querySelectorAll('.stat-card');
+                [0, 1, 2, 3].forEach(i => {
+                    stats[i].querySelector('.number').textContent = '0';
+                });
+
+                showMessage('✅ 데이터가 삭제되었습니다. Excel 파일을 업로드하세요.', 'success');
+
+                setTimeout(() => {
+                    document.getElementById('fileInput').click();
+                }, 500);
+            }
+        }
+
+        function showMessage(text, type = 'success') {
+            const msg = document.createElement('div');
+            msg.className = `message ${type === 'error' ? 'error' : ''}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterCustomers);
+
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                filterCustomers();
+            });
+        });
+    </script>
+</body>
+</html>
