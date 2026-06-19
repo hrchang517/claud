@@ -104,9 +104,6 @@ def upload_file():
                 # 상품 정보 추출 (F열)
                 prod_info = str(row1_values[5] or '').strip()
 
-                # J열(기타) 정보 추출 - 처리상태에 표시
-                j_val = str(row1_values[9] or '').strip()
-
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
                     customers.append({
@@ -115,7 +112,7 @@ def upload_file():
                         'phone': phone_num,     # 전화번호
                         'partner': partner_type,
                         'product': prod_info,
-                        'status': j_val         # J열 데이터([환경] - 등)
+                        'status': ''            # 빈 입력창
                     })
                     print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
                 else:
