@@ -163,13 +163,15 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 12px;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background-image: none !important;
+            background-color: white !important;
         }
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
+            -webkit-appearance: none !important;
             margin: 0;
         }
         input::-webkit-contacts-auto-fill-button,
@@ -178,6 +180,12 @@
         input::-webkit-search-results-button,
         input::-webkit-search-decoration {
             display: none !important;
+        }
+        input::-webkit-autofill,
+        input::-webkit-autofill:hover,
+        input::-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0 1000px white inset !important;
+            -webkit-text-fill-color: #333 !important;
         }
         input:focus {
             outline: none;
