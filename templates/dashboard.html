@@ -58,7 +58,7 @@
         #fileInput { display: none; }
         .stats {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -264,10 +264,6 @@
             </div>
             <div class="stat-card">
                 <div class="number">0</div>
-                <div class="label">처리 완료</div>
-            </div>
-            <div class="stat-card">
-                <div class="number">0</div>
                 <div class="label">TBG</div>
             </div>
             <div class="stat-card">
@@ -398,15 +394,13 @@
 
         function updateStats() {
             const total = customers.length;
-            const completed = customers.filter(c => c.status).length;
             const tbg = customers.filter(c => c.partner === 'TBG').length;
             const tnc = customers.filter(c => c.partner === 'TNC').length;
 
             const stats = document.querySelectorAll('.stat-card');
             stats[0].querySelector('.number').textContent = total;
-            stats[1].querySelector('.number').textContent = completed;
-            stats[2].querySelector('.number').textContent = tbg;
-            stats[3].querySelector('.number').textContent = tnc;
+            stats[1].querySelector('.number').textContent = tbg;
+            stats[2].querySelector('.number').textContent = tnc;
         }
 
         function filterCustomers() {
