@@ -278,7 +278,7 @@
 
         <div class="controls">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="고객명, 연락처, 상품으로 검색...">
+                <input type="text" id="searchInput" placeholder="고객명, 연락처, 상품으로 검색..." autocomplete="off">
             </div>
             <div class="filter-group">
                 <button class="filter-btn active" data-filter="all">전체</button>
@@ -380,6 +380,7 @@
                         <input type="text" value="${customer.status}"
                                data-id="${customer.id}"
                                placeholder="처리내용 입력"
+                               autocomplete="off"
                                onchange="updateStatus(this)">
                     </td>
                 `;
