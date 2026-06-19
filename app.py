@@ -152,4 +152,4 @@ if __name__ == '__main__':
     print(f"템플릿 폴더: {app.template_folder}")
     port = int(os.environ.get('PORT', 8080))
     debug_mode = os.environ.get('FLASK_DEBUG', 'False') == 'True'
-    app.run(debug=debug_mode, port=port, use_reloader=False)
+    app.run(host='0.0.0.0', debug=debug_mode, port=port, use_reloader=False)
