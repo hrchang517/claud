@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>색칠책 - 만다라</title>
+    <style>
+        body { margin: 0; padding: 20px; background: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        svg { max-width: 800px; border: 2px solid #333; }
+    </style>
+</head>
+<body>
+<svg viewBox="0 0 800 1000" xmlns="http://www.w3.org/2000/svg">
+  <!-- 제목 -->
+  <text x="400" y="40" font-size="24" font-weight="bold" text-anchor="middle" fill="black">만다라 패턴</text>
+
+  <!-- 중심 원 -->
+  <circle cx="400" cy="500" r="30" fill="none" stroke="black" stroke-width="2.5"/>
+
+  <!-- 첫 번째 원 레이어 -->
+  <circle cx="400" cy="500" r="80" fill="none" stroke="black" stroke-width="2.5"/>
+
+  <!-- 원 위의 꽃잎 패턴 1 -->
+  <g id="petal-layer-1">
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(0 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(45 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(90 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(135 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(180 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(225 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(270 400 500)"/>
+    <ellipse cx="400" cy="350" rx="25" ry="50" fill="none" stroke="black" stroke-width="2" transform="rotate(315 400 500)"/>
+  </g>
+
+  <!-- 두 번째 원 레이어 -->
+  <circle cx="400" cy="500" r="150" fill="none" stroke="black" stroke-width="2.5"/>
+
+  <!-- 원 위의 꽃잎 패턴 2 -->
+  <g id="petal-layer-2">
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(0 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(45 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(90 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(135 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(180 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(225 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(270 400 500)"/>
+    <ellipse cx="400" cy="280" rx="35" ry="65" fill="none" stroke="black" stroke-width="2" transform="rotate(315 400 500)"/>
+  </g>
+
+  <!-- 세 번째 원 레이어 -->
+  <circle cx="400" cy="500" r="220" fill="none" stroke="black" stroke-width="2.5"/>
+
+  <!-- 원 위의 작은 원 패턴 -->
+  <g id="circle-pattern">
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(0 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(45 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(90 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(135 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(180 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(225 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(270 400 500)"/>
+    <circle cx="400" cy="220" r="15" fill="none" stroke="black" stroke-width="2" transform="rotate(315 400 500)"/>
+  </g>
+
+  <!-- 가장 바깥 원 -->
+  <circle cx="400" cy="500" r="280" fill="none" stroke="black" stroke-width="3"/>
+
+  <!-- 라디안 선 -->
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(45 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(90 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(135 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(180 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(225 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(270 400 500)"/>
+  <line x1="400" y1="220" x2="400" y2="100" stroke="black" stroke-width="1.5" transform="rotate(315 400 500)"/>
+</svg>
+</body>
+</html>

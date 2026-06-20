@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>소코반 - Sokoban Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            width: fit-content;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+
+        .btn:hover {
+            background: #f8f9fa;
+        }
+
+        #gameCanvas {
+            border-radius: 12px;
+            background: #1a1a1a;
+            display: block;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+            padding: 35px 42px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            border: 2px solid #667eea;
+            max-width: 350px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 25px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 14px;
+        }
+
+        .modal-text {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+            min-width: 100px;
+            max-width: 140px;
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 소코반</h1>
+            <p>상자를 목표 지점에 밀어넣는 퍼즐 게임</p>
+            <button class="btn" onclick="resetLevel()">🔄 리셋</button>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle">🎉 축하합니다!</div>
+            <div class="modal-text" id="modalText"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="nextLevel()">다음 레벨 →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const BASE_TILE_SIZE = 40;
+        let TILE_SIZE = BASE_TILE_SIZE;
+
+        const TILE_TYPES = {
+            EMPTY: 0,
+            WALL: 1,
+            FLOOR: 2,
+            GOAL: 3
+        };
+
+        let gameState = {
+            currentLevel: 1,
+            moves: 0,
+            history: [],
+            board: [],
+            player: { x: 0, y: 0 },
+            boxes: [],
+            goals: []
+        };
+
+        // 50개 레벨 생성 (간단한 절차적 생성)
+        function generateLevels() {
+            const levels = [];
+            for (let i = 1; i <= 50; i++) {
+                const width = 8 + Math.floor((i - 1) / 10) * 2;
+                const height = 8 + Math.floor((i - 1) / 10) * 2;
+                const boxCount = 1 + Math.floor((i - 1) / 10);
+
+                const map = [];
+                for (let y = 0; y < height; y++) {
+                    let row = '';
+                    for (let x = 0; x < width; x++) {
+                        if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
+                            row += '#';
+                        } else if (x === 1 && y === 1) {
+                            row += '@';
+                        } else {
+                            const rand = Math.random();
+                            if (rand < 0.1) row += '#';
+                            else row += ' ';
+                        }
+                    }
+                    map.push(row);
+                }
+
+                // 박스와 목표 배치
+                let boxesPlaced = 0;
+                let goalsPlaced = 0;
+                for (let y = 2; y < height - 1; y++) {
+                    for (let x = 2; x < width - 1; x++) {
+                        if (map[y][x] === ' ') {
+                            if (boxesPlaced < boxCount && Math.random() < 0.3) {
+                                map[y] = map[y].substring(0, x) + '$' + map[y].substring(x + 1);
+                                boxesPlaced++;
+                            } else if (goalsPlaced < boxCount && Math.random() < 0.2) {
+                                map[y] = map[y].substring(0, x) + '.' + map[y].substring(x + 1);
+                                goalsPlaced++;
+                            }
+                        }
+                    }
+                }
+
+                // 부족한 박스/목표 추가
+                for (let y = 2; y < height - 1 && boxesPlaced < boxCount; y++) {
+                    for (let x = 2; x < width - 1 && boxesPlaced < boxCount; x++) {
+                        if (map[y][x] === ' ') {
+                            map[y] = map[y].substring(0, x) + '$' + map[y].substring(x + 1);
+                            boxesPlaced++;
+                        }
+                    }
+                }
+
+                for (let y = 2; y < height - 1 && goalsPlaced < boxCount; y++) {
+                    for (let x = 2; x < width - 1 && goalsPlaced < boxCount; x++) {
+                        if (map[y][x] === ' ') {
+                            map[y] = map[y].substring(0, x) + '.' + map[y].substring(x + 1);
+                            goalsPlaced++;
+                        }
+                    }
+                }
+
+                while (map.length < height) {
+                    map.push(' '.repeat(width));
+                }
+
+                levels.push({
+                    name: `레벨 ${i}`,
+                    width: width,
+                    height: height,
+                    map: map
+                });
+            }
+            return levels;
+        }
+
+        const LEVELS = generateLevels();
+
+        function init() {
+            loadLevel(1);
+        }
+
+        function loadLevel(levelIndex) {
+            const level = LEVELS[levelIndex - 1];
+            if (!level) {
+                alert('레벨을 찾을 수 없습니다.');
+                return;
+            }
+
+            gameState.currentLevel = levelIndex;
+            gameState.moves = 0;
+            gameState.history = [];
+            gameState.boxes = [];
+            gameState.goals = [];
+
+            const width = level.width;
+            const height = level.height;
+            gameState.board = Array(height).fill(null).map(() => Array(width).fill(TILE_TYPES.EMPTY));
+
+            level.map.forEach((row, y) => {
+                for (let x = 0; x < Math.min(row.length, width); x++) {
+                    const char = row[x];
+                    if (char === '#') {
+                        gameState.board[y][x] = TILE_TYPES.WALL;
+                    } else if (char === '.') {
+                        gameState.board[y][x] = TILE_TYPES.GOAL;
+                        gameState.goals.push({ x, y });
+                    } else if (char === '@') {
+                        gameState.board[y][x] = TILE_TYPES.FLOOR;
+                        gameState.player = { x, y };
+                    } else if (char === '$') {
+                        gameState.board[y][x] = TILE_TYPES.FLOOR;
+                        gameState.boxes.push({ x, y });
+                    } else {
+                        gameState.board[y][x] = TILE_TYPES.FLOOR;
+                    }
+                }
+            });
+
+            // 게임판 크기에 따라 타일 크기 조정
+            let adjustedTileSize = BASE_TILE_SIZE;
+            const gameWidth = width * BASE_TILE_SIZE;
+            const gameHeight = height * BASE_TILE_SIZE;
+            const maxWidth = 750;
+            const maxHeight = 550;
+
+            if (gameWidth > maxWidth || gameHeight > maxHeight) {
+                const scaleX = maxWidth / gameWidth;
+                const scaleY = maxHeight / gameHeight;
+                adjustedTileSize = BASE_TILE_SIZE * Math.min(scaleX, scaleY);
+            }
+
+            TILE_SIZE = adjustedTileSize;
+            canvas.height = height * TILE_SIZE + 40;
+
+            render();
+        }
+
+        function render() {
+            // 배경
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 게임판 중앙 정렬
+            const scaledWidth = gameState.board[0].length * TILE_SIZE;
+            const startX = (canvas.width - scaledWidth) / 2;
+            const startY = 20;
+
+            // 벽, 목표, 박스, 플레이어 그리기
+            gameState.board.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const px = startX + x * TILE_SIZE;
+                    const py = startY + y * TILE_SIZE;
+
+                    if (cell === TILE_TYPES.WALL) {
+                        // 버건디 벽
+                        const gradient = ctx.createLinearGradient(px, py, px + TILE_SIZE, py + TILE_SIZE);
+                        gradient.addColorStop(0, '#9b1d20');
+                        gradient.addColorStop(0.5, '#7b1416');
+                        gradient.addColorStop(1, '#5b0f10');
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+                    } else if (cell === TILE_TYPES.GOAL) {
+                        // 목표
+                        const radius = TILE_SIZE * 0.3;
+                        ctx.fillStyle = '#ffc107';
+                        ctx.beginPath();
+                        ctx.arc(px + TILE_SIZE / 2, py + TILE_SIZE / 2, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            });
+
+            // 박스 그리기
+            gameState.boxes.forEach((box) => {
+                const px = startX + box.x * TILE_SIZE;
+                const py = startY + box.y * TILE_SIZE;
+                const isOnGoal = gameState.goals.some(g => g.x === box.x && g.y === box.y);
+
+                const bgColor = isOnGoal ? '#7cb342' : '#d4a574';
+                const gradient = ctx.createLinearGradient(px, py, px + TILE_SIZE, py + TILE_SIZE);
+                gradient.addColorStop(0, isOnGoal ? '#9ccc65' : '#e0c59f');
+                gradient.addColorStop(1, isOnGoal ? '#558b2f' : '#a1887f');
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+                ctx.strokeStyle = isOnGoal ? '#33691e' : '#6d4c41';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
+
+                if (isOnGoal) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${Math.floor(TILE_SIZE * 0.4)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('✓', px + TILE_SIZE / 2, py + TILE_SIZE / 2);
+                }
+            });
+
+            // 플레이어 그리기
+            const playerX = startX + gameState.player.x * TILE_SIZE;
+            const playerY = startY + gameState.player.y * TILE_SIZE;
+            const cx = playerX + TILE_SIZE / 2;
+            const cy = playerY + TILE_SIZE / 2;
+
+            ctx.fillStyle = '#87CEEB';
+            ctx.beginPath();
+            ctx.arc(cx, cy - 8, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(cx - 6, cy + 2, 12, 12);
+
+            // 레벨 정보
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`레벨: ${gameState.currentLevel}/50  이동: ${gameState.moves}`, 10, canvas.height - 10);
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = gameState.player.x + dx;
+            const newY = gameState.player.y + dy;
+
+            if (gameState.board[newY]?.[newX] === TILE_TYPES.WALL) return;
+
+            const boxIndex = gameState.boxes.findIndex(b => b.x === newX && b.y === newY);
+            if (boxIndex !== -1) {
+                const box = gameState.boxes[boxIndex];
+                const newBoxX = box.x + dx;
+                const newBoxY = box.y + dy;
+
+                if (gameState.board[newBoxY]?.[newBoxX] === TILE_TYPES.WALL) return;
+                if (gameState.boxes.some(b => b.x === newBoxX && b.y === newBoxY)) return;
+
+                gameState.history.push(JSON.stringify({
+                    player: gameState.player,
+                    boxes: gameState.boxes.map(b => ({ ...b }))
+                }));
+
+                if (gameState.history.length > 5) gameState.history.shift();
+
+                box.x = newBoxX;
+                box.y = newBoxY;
+            } else {
+                gameState.history.push(JSON.stringify({
+                    player: gameState.player,
+                    boxes: gameState.boxes.map(b => ({ ...b }))
+                }));
+
+                if (gameState.history.length > 5) gameState.history.shift();
+            }
+
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            gameState.moves++;
+
+            render();
+            checkCompletion();
+        }
+
+        function undo() {
+            if (gameState.history.length === 0) return;
+            const prev = JSON.parse(gameState.history.pop());
+            gameState.player = prev.player;
+            gameState.boxes = prev.boxes;
+            gameState.moves = Math.max(0, gameState.moves - 1);
+            render();
+        }
+
+        function resetLevel() {
+            loadLevel(gameState.currentLevel);
+        }
+
+        function checkCompletion() {
+            const allOnGoals = gameState.boxes.every(box =>
+                gameState.goals.some(goal => goal.x === box.x && goal.y === box.y)
+            );
+
+            if (allOnGoals && gameState.boxes.length > 0) {
+                setTimeout(() => showCompletion(), 300);
+            }
+        }
+
+        function showCompletion() {
+            const modal = document.getElementById('modal');
+            document.getElementById('modalText').textContent = `${gameState.moves}번의 이동으로 완료했습니다!`;
+            modal.classList.add('show');
+        }
+
+        function nextLevel() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('show');
+            if (gameState.currentLevel < 50) {
+                loadLevel(gameState.currentLevel + 1);
+            } else {
+                alert('모든 레벨을 완료했습니다!');
+                loadLevel(1);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('modal');
+            if (modal.classList.contains('show')) {
+                if (e.key === 'Enter') {
+                    nextLevel();
+                }
+                return;
+            }
+
+            switch (e.key.toLowerCase()) {
+                case 'arrowup':
+                case 'w':
+                    e.preventDefault();
+                    movePlayer(0, -1);
+                    break;
+                case 'arrowdown':
+                case 's':
+                    e.preventDefault();
+                    movePlayer(0, 1);
+                    break;
+                case 'arrowleft':
+                case 'a':
+                    e.preventDefault();
+                    movePlayer(-1, 0);
+                    break;
+                case 'arrowright':
+                case 'd':
+                    e.preventDefault();
+                    movePlayer(1, 0);
+                    break;
+                case 'z':
+                    e.preventDefault();
+                    undo();
+                    break;
+                case 'r':
+                    e.preventDefault();
+                    resetLevel();
+                    break;
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

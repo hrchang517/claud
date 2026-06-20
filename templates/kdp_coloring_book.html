@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>아마존 KDP 색칠책 크리에이터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .svg-preview {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            max-height: 400px;
+            overflow: auto;
+        }
+        .svg-preview svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .design-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .design-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .theme-chip {
+            @apply inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm cursor-pointer hover:bg-blue-200 transition-colors;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .loading-spinner.active {
+            display: inline-block;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 헤더 -->
+    <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <h1 class="text-3xl font-bold">🎨 아마존 KDP 색칠책 크리에이터</h1>
+            <p class="text-indigo-100 mt-1">AI로 만드는 프로페셔널 색칠책 - KDP 완벽 준수</p>
+        </div>
+    </header>
+
+    <!-- 메인 컨테이너 -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- 탭 네비게이션 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="flex border-b">
+                <button onclick="switchTab('design')" class="tab-btn active flex-1 py-4 px-6 font-semibold text-gray-700 border-b-2 border-indigo-600 hover:bg-gray-50 transition">
+                    📝 도안 생성
+                </button>
+                <button onclick="switchTab('book')" class="tab-btn flex-1 py-4 px-6 font-semibold text-gray-700 border-b-2 border-transparent hover:bg-gray-50 transition">
+                    📚 책 구성
+                </button>
+                <button onclick="switchTab('checklist')" class="tab-btn flex-1 py-4 px-6 font-semibold text-gray-700 border-b-2 border-transparent hover:bg-gray-50 transition">
+                    ✅ KDP 검증
+                </button>
+                <button onclick="switchTab('tips')" class="tab-btn flex-1 py-4 px-6 font-semibold text-gray-700 border-b-2 border-transparent hover:bg-gray-50 transition">
+                    💡 출판 팁
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== 탭 1: 도안 생성 ===== -->
+        <div id="design" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 입력 패널 -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">색칠 도안 생성</h2>
+
+                        <div class="space-y-4">
+                            <!-- 인기 테마 -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">인기 테마</label>
+                                <div id="themes-container" class="space-y-2">
+                                    <p class="text-gray-500 text-sm">테마 로드 중...</p>
+                                </div>
+                            </div>
+
+                            <!-- 직접 입력 -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">또는 직접 입력</label>
+                                <textarea id="themeInput" placeholder="예: 해양 생물, 만다라 패턴, 정글 동물 등" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none h-20"></textarea>
+                                <p class="text-gray-500 text-xs mt-1">200자 이내</p>
+                            </div>
+
+                            <!-- 생성 버튼 -->
+                            <button onclick="generateDesign()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition flex items-center justify-center space-x-2">
+                                <span class="loading-spinner" id="generateSpinner"></span>
+                                <span id="generateBtn">🚀 도안 생성</span>
+                            </button>
+
+                            <p class="text-gray-500 text-xs">AI가 KDP 규격(300 DPI, 안전 여백 포함)에 맞는 SVG를 자동 생성합니다</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 프리뷰 패널 -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">생성된 도안 미리보기</h2>
+
+                        <div id="previewContainer" class="space-y-4">
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
+                                <p class="text-lg">도안 생성 후 여기에 표시됩니다</p>
+                                <p class="text-sm mt-2">테마를 입력하고 "도안 생성" 버튼을 클릭하세요</p>
+                            </div>
+                        </div>
+
+                        <!-- 생성된 도안에 대한 액션 -->
+                        <div id="actionButtons" class="mt-6 space-y-3 hidden">
+                            <button onclick="addCurrentDesignToBook()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">
+                                ➕ 책에 추가
+                            </button>
+                            <button onclick="generateVariants()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 rounded-lg transition">
+                                🎨 다른 스타일 3개 보기
+                            </button>
+                            <button onclick="regenerateDesign()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition">
+                                🔄 다시 생성
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 탭 2: 책 구성 ===== -->
+        <div id="book" class="tab-content">
+            <div class="space-y-6">
+                <!-- 책 설정 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 판형 선택 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">책 판형</h3>
+                        <div id="specContainer" class="space-y-2">
+                            <p class="text-gray-500">판형 로드 중...</p>
+                        </div>
+                    </div>
+
+                    <!-- 목표 페이지 -->
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">목표 페이지</h3>
+                        <div>
+                            <input type="number" id="targetPages" value="20" min="20" max="500" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="updateBookSettings()">
+                            <p class="text-gray-500 text-xs mt-2">20~500 페이지 (표지, 목차 제외)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 수익 계산기 -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow p-6 border border-green-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">💰 수익 계산</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-lg p-4">
+                            <p class="text-gray-600 text-sm">현재 페이지</p>
+                            <p class="text-2xl font-bold text-indigo-600" id="bookTotalPages">4</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4">
+                            <p class="text-gray-600 text-sm">권장 판매가</p>
+                            <p class="text-2xl font-bold text-indigo-600" id="bookSuggestedPrice">$7.99</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4">
+                            <p class="text-gray-600 text-sm">인쇄비</p>
+                            <p class="text-2xl font-bold text-orange-600" id="bookPrintCost">$2.50</p>
+                        </div>
+                        <div class="bg-white rounded-lg p-4">
+                            <p class="text-gray-600 text-sm">예상 로열티</p>
+                            <p class="text-2xl font-bold text-green-600" id="bookRoyalty">$2.30</p>
+                            <p class="text-xs text-gray-500 mt-1">1권당</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 추가된 도안 목록 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">추가된 도안 목록</h3>
+                        <span class="text-sm text-gray-600" id="designCount">0개</span>
+                    </div>
+
+                    <div id="designsList" class="space-y-3">
+                        <p class="text-gray-500 text-center py-8">추가된 도안이 없습니다</p>
+                    </div>
+
+                    <!-- 액션 -->
+                    <div class="mt-6 flex space-x-3">
+                        <button onclick="exportBook()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+                            📥 책 내보내기
+                        </button>
+                        <button onclick="clearBook()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition">
+                            🗑️ 초기화
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 탭 3: KDP 검증 ===== -->
+        <div id="checklist" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="checklistContainer" class="space-y-4">
+                    <!-- 체크리스트 동적으로 로드됨 -->
+                    <p class="text-gray-500">체크리스트 로드 중...</p>
+                </div>
+
+                <!-- KDP 팁 패널 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">📋 KDP 제출 전 체크사항</h3>
+                    <div class="space-y-3 text-sm text-gray-700">
+                        <div class="flex items-start space-x-2">
+                            <span class="text-green-600 mt-1">✓</span>
+                            <div>
+                                <p class="font-semibold">저작권 확인</p>
+                                <p class="text-gray-600">캐릭터, 유명인 얼굴 절대 금지</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-green-600 mt-1">✓</span>
+                            <div>
+                                <p class="font-semibold">PDF 변환</p>
+                                <p class="text-gray-600">Inkscape/Illustrator에서 PDF/X-1a로 내보내기</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-green-600 mt-1">✓</span>
+                            <div>
+                                <p class="font-semibold">메타데이터</p>
+                                <p class="text-gray-600">제목, 저자, 카테고리, 5개 이상 키워드</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="text-green-600 mt-1">✓</span>
+                            <div>
+                                <p class="font-semibold">테스트 출판</p>
+                                <p class="text-gray-600">CreateSpace로 테스트 후 KDP 제출</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-6">
+
+                    <!-- 수익 계산기 -->
+                    <h4 class="font-bold text-gray-900 mb-3">💰 수익 계산기</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">판매가</label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-gray-700">$</span>
+                                <input type="number" id="calcPrice" value="9.99" step="0.01" min="4.99" max="299.99" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" onchange="updateCalculator()">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">페이지 수</label>
+                            <input type="number" id="calcPages" value="20" min="20" max="500" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="updateCalculator()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">판형</label>
+                            <select id="calcSpec" onchange="updateCalculator()" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="8.5x11">Letter (8.5" × 11")</option>
+                                <option value="8x10">Square (8" × 10")</option>
+                                <option value="6x9">Standard (6" × 9")</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="text-xs text-gray-600">인쇄비: <span class="font-bold text-gray-900" id="calcCost">$2.50</span></p>
+                        <p class="text-xs text-gray-600 mt-1">로열티: <span class="font-bold text-green-600" id="calcRoyalty">$3.49</span></p>
+                        <p class="text-xs text-gray-600 mt-1">수익률: <span class="font-bold text-green-600" id="calcMargin">35%</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 탭 4: 출판 팁 ===== -->
+        <div id="tips" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 인기 테마 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">🎨 인기 있는 테마</h3>
+                    <div id="tipsThemes" class="space-y-3">
+                        <p class="text-gray-500">테마 로드 중...</p>
+                    </div>
+                </div>
+
+                <!-- 키워드 전략 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">🔍 효과적인 키워드</h3>
+                    <div id="tipsKeywords" class="space-y-2">
+                        <p class="text-gray-500">키워드 로드 중...</p>
+                    </div>
+                </div>
+
+                <!-- 가격 전략 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">💰 가격 전략</h3>
+                    <div id="tipsPricing" class="space-y-3">
+                        <p class="text-gray-500">가격 정보 로드 중...</p>
+                    </div>
+                </div>
+
+                <!-- 품질 점검 -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">✅ 품질 점검 팁</h3>
+                    <div id="tipsQA" class="space-y-3">
+                        <p class="text-gray-500">팁 로드 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-gray-900 text-gray-400 mt-16">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <p class="text-center">© 2024 KDP 색칠책 크리에이터 | 아마존 KDP 규격 완벽 준수</p>
+        </div>
+    </footer>
+
+    <script>
+        // 전역 상태
+        let currentDesign = null;
+        let currentTheme = null;
+
+        // 탭 전환
+        function switchTab(tabName) {
+            // 모든 탭 숨기기
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.style.borderBottomColor = 'transparent';
+                btn.style.color = '#374151';
+            });
+
+            // 선택된 탭 표시
+            document.getElementById(tabName).classList.add('active');
+            event.target.style.borderBottomColor = '#4f46e5';
+            event.target.style.color = '#374151';
+
+            // 각 탭별 초기화
+            if (tabName === 'book') {
+                loadBook();
+            } else if (tabName === 'checklist') {
+                loadChecklist();
+            } else if (tabName === 'tips') {
+                loadTips();
+            }
+        }
+
+        // API 호출 헬퍼
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) options.body = JSON.stringify(data);
+
+            try {
+                const response = await fetch(`/api${endpoint}`, options);
+                const json = await response.json();
+                if (!response.ok) {
+                    throw new Error(json.error || '요청 실패');
+                }
+                return json;
+            } catch (error) {
+                alert('오류: ' + error.message);
+                throw error;
+            }
+        }
+
+        // ===== 도안 생성 탭 =====
+        async function loadThemes() {
+            const response = await apiCall('/themes');
+            const container = document.getElementById('themes-container');
+            container.innerHTML = response.themes.map(theme =>
+                `<div class="theme-chip" onclick="setTheme('${theme}')">${theme}</div>`
+            ).join('');
+        }
+
+        function setTheme(theme) {
+            document.getElementById('themeInput').value = theme;
+        }
+
+        async function generateDesign() {
+            const theme = document.getElementById('themeInput').value.trim();
+            if (!theme) {
+                alert('테마를 입력해주세요');
+                return;
+            }
+
+            const spinner = document.getElementById('generateSpinner');
+            const btn = document.getElementById('generateBtn');
+            spinner.classList.add('active');
+            btn.style.opacity = '0.7';
+
+            try {
+                const response = await apiCall('/generate-design', 'POST', { theme });
+                currentDesign = response.svg;
+                currentTheme = response.theme;
+                displayDesign(response.svg);
+                document.getElementById('actionButtons').classList.remove('hidden');
+            } finally {
+                spinner.classList.remove('active');
+                btn.style.opacity = '1';
+            }
+        }
+
+        function displayDesign(svg) {
+            document.getElementById('previewContainer').innerHTML = `
+                <div class="svg-preview">
+                    ${svg}
+                </div>
+                <p class="text-sm text-gray-600">
+                    테마: <span class="font-semibold">${currentTheme}</span>
+                </p>
+            `;
+        }
+
+        function regenerateDesign() {
+            generateDesign();
+        }
+
+        function generateVariants() {
+            alert('다른 스타일 생성 기능은 추후 업데이트됩니다');
+        }
+
+        async function addCurrentDesignToBook() {
+            if (!currentDesign || !currentTheme) {
+                alert('생성된 도안이 없습니다');
+                return;
+            }
+
+            await apiCall('/book/add-design', 'POST', {
+                theme: currentTheme,
+                svg: currentDesign
+            });
+
+            alert('도안이 책에 추가되었습니다!');
+            currentDesign = null;
+            currentTheme = null;
+            document.getElementById('themeInput').value = '';
+            document.getElementById('previewContainer').innerHTML = `
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center text-gray-500">
+                    <p class="text-lg">도안이 추가되었습니다 📚</p>
+                    <p class="text-sm mt-2">다음 도안을 생성하세요</p>
+                </div>
+            `;
+            document.getElementById('actionButtons').classList.add('hidden');
+        }
+
+        // ===== 책 구성 탭 =====
+        async function loadBook() {
+            const specs = await apiCall('/specs');
+            const specContainer = document.getElementById('specContainer');
+            specContainer.innerHTML = specs.specs.map(spec =>
+                `<label class="flex items-center space-x-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="spec" value="${spec.id}" onchange="updateBookSettings()" ${spec.id === '8.5x11' ? 'checked' : ''} class="w-4 h-4">
+                    <div>
+                        <p class="font-semibold text-gray-900">${spec.name}</p>
+                        <p class="text-xs text-gray-600">인쇄비: $${spec.print_cost}</p>
+                    </div>
+                </label>`
+            ).join('');
+
+            await updateBookDisplay();
+        }
+
+        async function updateBookSettings() {
+            const spec = document.querySelector('input[name="spec"]:checked').value;
+            const targetPages = parseInt(document.getElementById('targetPages').value) || 20;
+
+            await apiCall('/book', 'POST', { spec, target_pages: targetPages });
+            await updateBookDisplay();
+        }
+
+        async function updateBookDisplay() {
+            const book = await apiCall('/book');
+
+            document.getElementById('bookTotalPages').textContent = book.actual_pages;
+            document.getElementById('bookSuggestedPrice').textContent = '$' + book.suggested_price.toFixed(2);
+            document.getElementById('bookPrintCost').textContent = '$' + book.print_cost.toFixed(2);
+            document.getElementById('bookRoyalty').textContent = '$' + book.royalty_per_book.toFixed(2);
+            document.getElementById('designCount').textContent = book.total_designs + '개';
+
+            // 도안 목록
+            const designsList = document.getElementById('designsList');
+            if (book.designs.length === 0) {
+                designsList.innerHTML = '<p class="text-gray-500 text-center py-8">추가된 도안이 없습니다</p>';
+            } else {
+                designsList.innerHTML = book.designs.map((design, idx) => `
+                    <div class="design-card flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-900">도안 #${design.id}</p>
+                            <p class="text-sm text-gray-600">${design.theme}</p>
+                        </div>
+                        <button onclick="removeDesign(${design.id})" class="text-red-600 hover:text-red-700 font-semibold">삭제</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function removeDesign(id) {
+            if (confirm('이 도안을 삭제하시겠습니까?')) {
+                await apiCall('/book/remove-design', 'POST', { design_id: id });
+                await updateBookDisplay();
+            }
+        }
+
+        function exportBook() {
+            alert('책 내보내기 기능은 추후 업데이트됩니다. 현재는 도안들이 저장되었습니다.');
+        }
+
+        async function clearBook() {
+            if (confirm('책을 초기화하시겠습니까? 모든 도안이 삭제됩니다.')) {
+                await apiCall('/book/clear', 'POST');
+                await updateBookDisplay();
+            }
+        }
+
+        // ===== KDP 검증 탭 =====
+        async function loadChecklist() {
+            const checklist = await apiCall('/kdp-checklist');
+            const container = document.getElementById('checklistContainer');
+
+            let html = '';
+            for (const [key, section] of Object.entries(checklist)) {
+                html += `
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">${section.title}</h3>
+                        <div class="space-y-2">
+                            ${section.items.map((item, idx) => `
+                                <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" id="check-${key}-${idx}" class="w-4 h-4 rounded">
+                                    <span class="flex-1 text-gray-700">${item.task}</span>
+                                    ${item.required ? '<span class="text-red-500 text-xs">필수</span>' : '<span class="text-gray-400 text-xs">선택</span>'}
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        async function updateCalculator() {
+            const price = parseFloat(document.getElementById('calcPrice').value) || 9.99;
+            const pages = parseInt(document.getElementById('calcPages').value) || 20;
+            const spec = document.getElementById('calcSpec').value;
+
+            const result = await apiCall('/calculate-royalty', 'POST', {
+                price, pages, spec
+            });
+
+            document.getElementById('calcCost').textContent = '$' + result.print_cost.toFixed(2);
+            document.getElementById('calcRoyalty').textContent = '$' + result.royalty.toFixed(2);
+            document.getElementById('calcMargin').textContent = result.profit_margin + '%';
+        }
+
+        // ===== 출판 팁 탭 =====
+        async function loadTips() {
+            const tips = await apiCall('/publishing-tips');
+
+            // 인기 테마
+            const themesHtml = tips.themes.items.map(item => `
+                <div class="p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                    <p class="font-semibold text-gray-900">${item.theme}</p>
+                    <p class="text-xs text-gray-600">${item.reason}</p>
+                    <p class="text-xs text-blue-600 mt-1">💡 ${item.tip}</p>
+                </div>
+            `).join('');
+            document.getElementById('tipsThemes').innerHTML = themesHtml;
+
+            // 키워드
+            const keywordsHtml = tips.keywords.items.map(kw =>
+                `<div class="flex items-center space-x-2">
+                    <span class="text-blue-600">•</span>
+                    <span class="text-gray-700">${kw}</span>
+                </div>`
+            ).join('');
+            document.getElementById('tipsKeywords').innerHTML = keywordsHtml;
+
+            // 가격 전략
+            const pricingHtml = tips.pricing.items.map(item => `
+                <div class="p-3 border border-gray-200 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-900 font-semibold">${item.pages} 페이지</span>
+                        <span class="text-green-600 font-bold">${item.price}</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">${item.reason}</p>
+                </div>
+            `).join('');
+            document.getElementById('tipsPricing').innerHTML = pricingHtml;
+
+            // QA
+            const qaHtml = tips.qa.items.map(item =>
+                `<div class="flex items-start space-x-2">
+                    <span class="text-green-600 mt-1">✓</span>
+                    <span class="text-gray-700 text-sm">${item}</span>
+                </div>`
+            ).join('');
+            document.getElementById('tipsQA').innerHTML = qaHtml;
+        }
+
+        // 페이지 로드
+        window.addEventListener('DOMContentLoaded', () => {
+            loadThemes();
+            updateCalculator();
+        });
+    </script>
+</body>
+</html>

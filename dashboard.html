@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마인드케이 처리 관리 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header-left p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+
+        .controls {
+            background: white;
+            padding: 20px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .filter-btn:hover {
+            border-color: #667eea;
+        }
+
+        .table-wrapper {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            word-break: break-word;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .customer-id {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .customer-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .partner-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .partner-tbg {
+            background: #cce5ff;
+            color: #004499;
+        }
+
+        .partner-tnc {
+            background: #e8d5ff;
+            color: #6600cc;
+        }
+
+        .status-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+
+        .status-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            margin-right: 4px;
+            font-size: 11px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-view {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-view:hover {
+            background: #5568d3;
+        }
+
+        .action-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .action-delete:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h3 {
+            font-size: 13px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 6px;
+        }
+
+        .detail-item {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+            min-width: 100px;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #333;
+            flex: 1;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-card .number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #28a745;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            th, td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>📊 마인드케이 처리 관리 대시보드</h1>
+                <p>고객 처리 현황 및 진행 상태 관리</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-download" onclick="downloadData()">⬇️ 데이터 다운로드</button>
+            </div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="고객명, 연락처, 상품으로 검색...">
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="TBG">TBG</button>
+                <button class="filter-btn" data-filter="TNC">TNC</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">번호</th>
+                        <th style="width: 100px;">고객명</th>
+                        <th style="width: 100px;">연락처</th>
+                        <th style="width: 80px;">파트너</th>
+                        <th style="width: 200px;">상품</th>
+                        <th style="width: 150px;">처리 상태</th>
+                        <th style="width: 80px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <p>📋 데이터가 없습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>고객 상세 정보</span>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="detailBody"></div>
+        </div>
+    </div>
+
+    <script>
+        // 고객 데이터 (HTML에 직접 내장)
+        const initialData = [
+{"id": "148", "name": "이선아", "birth": "891007-2", "phone": "010-6650-7088", "partner": "TBG", "product": "[삼성전자] 삼성 양문형 냉장고(852L_코타 PCM 화이트)", "productCode": "RS84DB5002CW", "address": "[55009] 전북특별자치도 전주시 덕진구 인후3길 9 203호", "status": "🔍 할당완료", "memo": "[기타] 오후1시이후해피콜요청", "happyCall": "[해피콜] 13:00~14:00", "processStatus": ""},
+{"id": "141", "name": "박영종", "birth": "590712-1", "phone": "010-8231-5781", "partner": "TNC", "product": "삼성전자 2등급 651L 젠틀블랙 양문형 냉장고", "productCode": "RS70F65Q2F", "address": "[61407] 광주 동구 필문대로137번길 5-15 다정빌302호", "status": "🔍 부재중(일자/시간기록)", "memo": "[기타] -", "happyCall": "[해피콜] -", "processStatus": ""},
+{"id": "136", "name": "이현정", "birth": "760301-2", "phone": "010-9408-9204", "partner": "TBG", "product": "삼성전자 그랑데 통버블 14kg 세탁기", "productCode": "WA14CG6441BY", "address": "[10846] 경기 파주시 탄현면 검산로492번길 8 1층 단독주택", "status": "🔍 진행중(상세사유기재)", "memo": "[기타] 빠른 해피콜 요청", "happyCall": "[해피콜] 17:00~18:00", "processStatus": ""},
+{"id": "135", "name": "김흥배", "birth": "820314-1", "phone": "010-6309-4786", "partner": "TBG", "product": "삼성전자 AI Q9000 청정 19평+5.6형 에어컨 (일반)", "productCode": "AF60F19D11WRS", "address": "[11786] 경기 의정부시 용민로21번길 63 309동1202호", "status": "🔍 진행중(상세사유기재)", "memo": "[기타] 빠른 해피콜요청 @금", "happyCall": "[해피콜] 09:00~10:00", "processStatus": ""},
+{"id": "119", "name": "느구옌티푸웅", "birth": "880128-2", "phone": "010-3128-1402", "partner": "TNC", "product": "삼성전자 Bespoke 김치플러스 3도어 328L 리파인드 이녹스 김치냉장고", "productCode": "RQ33DG71J3S9", "address": "[17418] 경기 이천시 장호원읍 장여로85번길 34-1 1동101호", "status": "🔍 진행중(상세사유기재)", "memo": "[기타] RQ33DG71J3S9", "happyCall": "[해피콜] -", "processStatus": ""},
+{"id": "117", "name": "신천수", "birth": "830508-1", "phone": "010-4488-2101", "partner": "TNC", "product": "삼성전자 양문형 852L 프리스탠딩 양문형 젠틀 실버 냉장고", "productCode": "RS84DG5002M9", "address": "[33022] 충남 논산시 양촌면 매죽헌로1723번길 3 (남산리) 단독주택", "status": "🔍 진행중(상세사유기재)", "memo": "[기타] *설치 요청일 2026년 06월 29일 ./ 설치시 연락처 : 010-4488-2101", "happyCall": "[해피콜] -", "processStatus": ""},
+{"id": "106", "name": "염혜영", "birth": "811102-2", "phone": "010-7393-3637", "partner": "TNC", "product": "삼성전자 AI Q9000 17평+5.6형 에어컨 (일반)", "productCode": "AF60F17D11WRS", "address": "[61412] 광주 동구 무등로 374 109동 1601호", "status": "🔍 진행중(상세사유기재)", "memo": "[기타] 일반형", "happyCall": "[해피콜] -", "processStatus": ""},
+{"id": "92", "name": "김경태", "birth": "700701-1", "phone": "010-6804-4300", "partner": "TNC", "product": "삼성전자 김치플러스 뚜껑형 221L 5면 메탈쿨링 파인실버 김치냉장고", "productCode": "RP22C3231Z3", "address": "[11175] 경기 포천시 소흘읍 솔모루로 89-34 현대빌라 D-201호", "status": "🔍 진행중(상세사유기재)", "memo": "", "happyCall": "", "processStatus": ""}
+        ];
+
+        let customers = [];
+        let filteredCustomers = [];
+        let currentFilter = 'all';
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('customersData');
+            if (saved) {
+                customers = JSON.parse(saved);
+            } else {
+                customers = initialData.map(c => ({...c}));
+                saveToStorage();
+            }
+            filteredCustomers = [...customers];
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('customersData', JSON.stringify(customers));
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (filteredCustomers.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+
+            filteredCustomers.forEach((customer) => {
+                const row = document.createElement('tr');
+                const partnerClass = customer.partner === 'TBG' ? 'partner-tbg' : customer.partner === 'TNC' ? 'partner-tnc' : '';
+
+                row.innerHTML = `
+                    <td><span class="customer-id">#${customer.id}</span></td>
+                    <td><span class="customer-name">${customer.name}</span></td>
+                    <td>${customer.phone}</td>
+                    <td><span class="partner-badge ${partnerClass}">${customer.partner}</span></td>
+                    <td style="font-size: 12px; color: #555;">
+                        <div>${customer.product || '-'}</div>
+                        <div style="font-size: 11px; color: #999;">${customer.productCode}</div>
+                    </td>
+                    <td>
+                        <input type="text" class="status-input" value="${customer.processStatus}"
+                               data-id="${customer.id}" placeholder="상태 입력..."
+                               onchange="updateStatus(this)">
+                    </td>
+                    <td>
+                        <button class="action-btn action-view" onclick="showDetail('${customer.id}')">상세</button>
+                        <button class="action-btn action-delete" onclick="deleteCustomer('${customer.id}')">삭제</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStatus(input) {
+            const id = input.dataset.id;
+            const customer = customers.find(c => c.id === id);
+            if (customer) {
+                customer.processStatus = input.value;
+                saveToStorage();
+            }
+        }
+
+        function filterCustomers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredCustomers = customers.filter(customer => {
+                const matchesSearch =
+                    customer.name.toLowerCase().includes(searchTerm) ||
+                    customer.phone.includes(searchTerm) ||
+                    customer.product.toLowerCase().includes(searchTerm) ||
+                    customer.id.includes(searchTerm);
+
+                const matchesFilter = currentFilter === 'all' || customer.partner === currentFilter;
+
+                return matchesSearch && matchesFilter;
+            });
+
+            renderTable();
+        }
+
+        function showDetail(id) {
+            const customer = customers.find(c => c.id === id);
+            if (!customer) return;
+
+            const detailBody = document.getElementById('detailBody');
+            detailBody.innerHTML = `
+                <div class="detail-section">
+                    <h3>기본 정보</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">고객번호</span>
+                        <span class="detail-value">#${customer.id}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">고객명</span>
+                        <span class="detail-value">${customer.name}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">생년월일</span>
+                        <span class="detail-value">${customer.birth || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">연락처</span>
+                        <span class="detail-value">${customer.phone}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">파트너</span>
+                        <span class="detail-value">${customer.partner}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>상품 정보</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">상품명</span>
+                        <span class="detail-value">${customer.product || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">모델명</span>
+                        <span class="detail-value">${customer.productCode}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>처리 정보</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">처리 상태</span>
+                        <span class="detail-value">${customer.status}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">메모</span>
+                        <span class="detail-value">${customer.memo || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">해피콜</span>
+                        <span class="detail-value">${customer.happyCall || '-'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">처리 내용</span>
+                        <span class="detail-value">
+                            <input type="text" class="status-input" value="${customer.processStatus}"
+                                   placeholder="처리 내용을 입력하세요..."
+                                   style="width: 100%; margin-top: 5px;"
+                                   onchange="updateProcessStatus('${customer.id}', this.value)">
+                        </span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>설치 정보</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">설치지역</span>
+                        <span class="detail-value">${customer.address || '-'}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('show');
+        }
+
+        function updateProcessStatus(id, value) {
+            const customer = customers.find(c => c.id === id);
+            if (customer) {
+                customer.processStatus = value;
+                saveToStorage();
+                renderTable();
+            }
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                customers = customers.filter(c => c.id !== id);
+                filteredCustomers = filteredCustomers.filter(c => c.id !== id);
+                saveToStorage();
+                renderTable();
+                updateStats();
+                closeModal();
+                showMessage('삭제되었습니다.', 'success');
+            }
+        }
+
+        function updateStats() {
+            const totalCount = customers.length;
+            const processedCount = customers.filter(c => c.processStatus).length;
+            const tbgCount = customers.filter(c => c.partner === 'TBG').length;
+            const tncCount = customers.filter(c => c.partner === 'TNC').length;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${totalCount}</div>
+                    <div class="label">전체 고객</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${processedCount}</div>
+                    <div class="label">처리 완료</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${tbgCount}</div>
+                    <div class="label">TBG</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${tncCount}</div>
+                    <div class="label">TNC</div>
+                </div>
+            `;
+        }
+
+        function downloadData() {
+            let csv = '번호,고객명,생년월일,연락처,파트너,상품명,모델명,설치주소,처리상태,메모,해피콜,처리내용\n';
+
+            customers.forEach(c => {
+                csv += `${c.id},"${c.name}","${c.birth}","${c.phone}","${c.partner}","${c.product}","${c.productCode}","${c.address}","${c.status}","${c.memo}","${c.happyCall}","${c.processStatus}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `마인드케이_처리관리_${new Date().toISOString().split('T')[0]}.csv`);
+            link.click();
+
+            showMessage('파일이 다운로드되었습니다.', 'success');
+        }
+
+        function showMessage(text, type) {
+            const msg = document.createElement('div');
+            msg.className = `message ${type}`;
+            msg.textContent = text;
+            document.body.appendChild(msg);
+
+            setTimeout(() => {
+                msg.remove();
+            }, 3000);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', filterCustomers);
+
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                filterCustomers();
+            });
+        });
+
+        document.getElementById('detailModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('detailModal')) {
+                closeModal();
+            }
+        });
+
+        // 초기화
+        loadFromStorage();
+        renderTable();
+        updateStats();
+        showMessage('✅ 8명의 고객 정보가 로드되었습니다!', 'success');
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마인드케이 처리 관리</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 28px; color: #333; margin-bottom: 5px; }
+        .header p { color: #666; font-size: 14px; }
+        .table-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        tbody tr:hover { background-color: #f8f9fa; }
+        .id { color: #667eea; font-weight: 600; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .tbg { background: #cce5ff; color: #004499; }
+        .tnc { background: #e8d5ff; color: #6600cc; }
+        input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 마인드케이 처리 관리 대시보드</h1>
+            <p>고객 처리 현황 및 진행 상태 관리</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>고객명</th>
+                        <th>연락처</th>
+                        <th>파트너</th>
+                        <th>상품</th>
+                        <th>처리 상태</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="id">#148</span></td>
+                        <td>이선아</td>
+                        <td>010-6650-7088</td>
+                        <td><span class="badge tbg">TBG</span></td>
+                        <td>삼성 양문형 냉장고(852L)</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#141</span></td>
+                        <td>박영종</td>
+                        <td>010-8231-5781</td>
+                        <td><span class="badge tnc">TNC</span></td>
+                        <td>651L 젠틀블랙 양문형 냉장고</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#136</span></td>
+                        <td>이현정</td>
+                        <td>010-9408-9204</td>
+                        <td><span class="badge tbg">TBG</span></td>
+                        <td>통버블 14kg 세탁기</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#135</span></td>
+                        <td>김흥배</td>
+                        <td>010-6309-4786</td>
+                        <td><span class="badge tbg">TBG</span></td>
+                        <td>AI Q9000 청정 19평 에어컨</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#119</span></td>
+                        <td>느구옌티푸웅</td>
+                        <td>010-3128-1402</td>
+                        <td><span class="badge tnc">TNC</span></td>
+                        <td>Bespoke 김치플러스 328L</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#117</span></td>
+                        <td>신천수</td>
+                        <td>010-4488-2101</td>
+                        <td><span class="badge tnc">TNC</span></td>
+                        <td>양문형 852L 냉장고</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#106</span></td>
+                        <td>염혜영</td>
+                        <td>010-7393-3637</td>
+                        <td><span class="badge tnc">TNC</span></td>
+                        <td>AI Q9000 17평 에어컨</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                    <tr>
+                        <td><span class="id">#92</span></td>
+                        <td>김경태</td>
+                        <td>010-6804-4300</td>
+                        <td><span class="badge tnc">TNC</span></td>
+                        <td>김치플러스 뚜껑형 221L</td>
+                        <td><input type="text" placeholder="상태 입력..."></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
