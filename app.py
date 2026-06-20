@@ -104,6 +104,11 @@ def upload_file():
                 # 상품 정보 추출 (E열)
                 prod_info = str(row1_values[4] or '').strip()
 
+                # 처리상태 추출 (D열)
+                status_info = str(row1_values[3] or '').strip()
+                if status_info == '-':
+                    status_info = ''
+
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
                     customers.append({
@@ -112,7 +117,7 @@ def upload_file():
                         'phone': phone_num,     # 전화번호
                         'partner': partner_type,
                         'product': prod_info,
-                        'status': ''
+                        'status': status_info
                     })
                     print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
                 else:
