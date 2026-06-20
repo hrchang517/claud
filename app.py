@@ -101,8 +101,8 @@ def upload_file():
                 elif '티비고' in partner_text:
                     partner_type = 'TBG'
 
-                # 상품 정보 추출 (F열)
-                prod_info = str(row1_values[5] or '').strip()
+                # 상품 정보 추출 (E열)
+                prod_info = str(row1_values[4] or '').strip()
 
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
