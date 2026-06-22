@@ -162,41 +162,57 @@ def download_excel():
         if not customers:
             return jsonify({'error': '고객 데이터가 없습니다'}), 400
 
-        # 새 Excel 파일 생성
+        # 새 Excel 파일 생성 (업로드 형식과 동일)
         wb = Workbook()
         ws = wb.active
         ws.title = "고객데이터"
 
-        # 헤더 추가
-        headers = ['번호', '고객명', '연락처', '파트너', '상품', '처리상태']
-        ws.append(headers)
-
-        # 데이터 추가
+        # 고객 데이터를 3행씩 추가 (업로드 형식과 동일)
         for customer in customers:
-            ws.append([
-                customer.get('id', ''),
-                customer.get('name', ''),
-                customer.get('phone', ''),
-                customer.get('partner', ''),
-                customer.get('product', ''),
-                customer.get('status', '')
-            ])
+            # 파트너를 TBG/TNC에서 원래 형식으로 변환
+            partner_display = '파트너: 티비고' if customer.get('partner') == 'TBG' else '파트너: (주)티앤씨'
+
+            # Row 1: 번호, 고객명, 처리상태, 상품 등
+            row1_data = [
+                None,  # A열: 비워둠
+                customer.get('id', ''),  # B열: #번호
+                f"{customer.get('id', '')} {customer.get('name', '')}",  # C열: #번호 이름
+                '-',  # D열: -
+                customer.get('status', ''),  # E열: 처리상태
+                customer.get('product', ''),  # F열: 상품
+                None, None,  # G, H열
+                '[환경] -'  # H열: [환경]
+            ]
+            ws.append(row1_data)
+
+            # Row 2: 파트너 정보
+            row2_data = [
+                None,  # A열
+                partner_display,  # B열: 파트너
+            ]
+            ws.append(row2_data)
+
+            # Row 3: 연락처
+            row3_data = [
+                None,  # A열
+                None,  # B열
+                customer.get('phone', ''),  # C열: 연락처
+            ]
+            ws.append(row3_data)
 
         # 열 너비 자동 조정
-        ws.column_dimensions['A'].width = 12
         ws.column_dimensions['B'].width = 15
-        ws.column_dimensions['C'].width = 15
-        ws.column_dimensions['D'].width = 12
+        ws.column_dimensions['C'].width = 25
         ws.column_dimensions['E'].width = 30
-        ws.column_dimensions['F'].width = 30
+        ws.column_dimensions['F'].width = 35
 
         # 메모리에 파일 저장
         output = BytesIO()
         wb.save(output)
         output.seek(0)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f'고객데이터_{timestamp}.xlsx'
+        today = datetime.now().strftime("%Y%m%d")
+        filename = f'{today}_backup.xlsx'
 
         return send_file(
             output,
