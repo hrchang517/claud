@@ -101,8 +101,8 @@ def upload_file():
                 elif '티비고' in partner_text:
                     partner_type = 'TBG'
 
-                # 상품 정보 추출 (E열)
-                prod_info = str(row1_values[4] or '').strip()
+                # 상품 정보 추출 (F열)
+                prod_info = str(row1_values[5] or '').strip()
 
                 # 처리상태 추출 (E열 1번째 라인)
                 status_info = str(row1_values[4] or '').strip()
