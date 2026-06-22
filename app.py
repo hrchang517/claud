@@ -104,8 +104,8 @@ def upload_file():
                 # 상품 정보 추출 (E열)
                 prod_info = str(row1_values[4] or '').strip()
 
-                # 처리상태 추출 (D열 1번째 라인)
-                status_info = str(row1_values[3] or '').strip()
+                # 처리상태 추출 (E열 1번째 라인)
+                status_info = str(row1_values[4] or '').strip()
                 if status_info == '-':
                     status_info = ''
 
