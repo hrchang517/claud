@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import os
 import sys
-from flask import Flask, render_template, request, jsonify
-from openpyxl import load_workbook
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, send_file
+from openpyxl import load_workbook, Workbook
 from werkzeug.utils import secure_filename
+from io import BytesIO
 
 app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
@@ -150,6 +152,64 @@ def upload_file():
         print(f"\n❌ 오류 발생:")
         print(traceback.format_exc())
         return jsonify({'error': f'파일 처리 오류: {str(e)}'}), 500
+
+@app.route('/api/download', methods=['POST'])
+def download_excel():
+    try:
+        data = request.json
+        customers = data.get('customers', [])
+
+        if not customers:
+            return jsonify({'error': '고객 데이터가 없습니다'}), 400
+
+        # 새 Excel 파일 생성
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "고객데이터"
+
+        # 헤더 추가
+        headers = ['번호', '고객명', '연락처', '파트너', '상품', '처리상태']
+        ws.append(headers)
+
+        # 데이터 추가
+        for customer in customers:
+            ws.append([
+                customer.get('id', ''),
+                customer.get('name', ''),
+                customer.get('phone', ''),
+                customer.get('partner', ''),
+                customer.get('product', ''),
+                customer.get('status', '')
+            ])
+
+        # 열 너비 자동 조정
+        ws.column_dimensions['A'].width = 12
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 12
+        ws.column_dimensions['E'].width = 30
+        ws.column_dimensions['F'].width = 30
+
+        # 메모리에 파일 저장
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f'고객데이터_{timestamp}.xlsx'
+
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        import traceback
+        print(f"❌ Excel 다운로드 오류: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': f'파일 생성 오류: {str(e)}'}), 500
 
 if __name__ == '__main__':
     import os

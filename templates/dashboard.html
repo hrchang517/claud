@@ -55,6 +55,14 @@
             background: #5a6268;
             transform: translateY(-2px);
         }
+        .btn-download {
+            background: #28a745;
+            color: white;
+        }
+        .btn-download:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
         #fileInput { display: none; }
         .stats {
             display: grid;
@@ -255,6 +263,9 @@
                 <button class="btn btn-upload" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
                     📁 Excel 업로드
                 </button>
+                <button class="btn btn-download" id="downloadBtn" onclick="downloadExcel()" style="display: none;">
+                    ⬇️ Excel 다운로드
+                </button>
                 <button class="btn btn-reset" onclick="resetData()">🔄 새로 시작하기</button>
                 <input type="file" id="fileInput" accept=".xlsx,.xls">
             </div>
@@ -338,6 +349,7 @@
                     filteredCustomers = [...customers];
                     renderTable();
                     updateStats();
+                    document.getElementById('downloadBtn').style.display = 'block';
                     showMessage(`✅ ${data.count}명의 고객 정보를 불러왔습니다!`, 'success');
                 } else {
                     showMessage(`❌ ${data.error}`, 'error');
@@ -425,6 +437,49 @@
             renderTable();
         }
 
+        function downloadExcel() {
+            if (customers.length === 0) {
+                showMessage('❌ 다운로드할 고객 데이터가 없습니다.', 'error');
+                return;
+            }
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.innerHTML = '⏳ 준비 중<span class="loading"><span class="spinner"></span></span>';
+            downloadBtn.disabled = true;
+
+            fetch('/api/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ customers: customers })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('다운로드 실패');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `고객데이터_${new Date().toISOString().slice(0,10)}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showMessage('✅ Excel 파일이 다운로드되었습니다!', 'success');
+            })
+            .catch(error => {
+                console.error('오류:', error);
+                showMessage('❌ Excel 다운로드 중 오류가 발생했습니다.', 'error');
+            })
+            .finally(() => {
+                downloadBtn.textContent = originalText;
+                downloadBtn.disabled = false;
+            });
+        }
+
         function resetData() {
             if (confirm('현재 데이터를 모두 삭제하고 새 Excel 파일을 업로드하시겠습니까?')) {
                 customers = [];
@@ -442,6 +497,7 @@
                     stats[i].querySelector('.number').textContent = '0';
                 });
 
+                document.getElementById('downloadBtn').style.display = 'none';
                 showMessage('✅ 데이터가 삭제되었습니다. Excel 파일을 업로드하세요.', 'success');
 
                 setTimeout(() => {
