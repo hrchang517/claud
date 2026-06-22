@@ -55,6 +55,14 @@
             background: #5a6268;
             transform: translateY(-2px);
         }
+        .btn-save {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-save:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
         .btn-download {
             background: #28a745;
             color: white;
@@ -263,6 +271,9 @@
                 <button class="btn btn-upload" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
                     📁 Excel 업로드
                 </button>
+                <button class="btn btn-save" id="saveBtn" onclick="saveData()" style="display: none;">
+                    💾 저장하기
+                </button>
                 <button class="btn btn-download" id="downloadBtn" onclick="downloadExcel()" style="display: none;">
                     ⬇️ Excel 다운로드
                 </button>
@@ -349,6 +360,7 @@
                     filteredCustomers = [...customers];
                     renderTable();
                     updateStats();
+                    document.getElementById('saveBtn').style.display = 'block';
                     document.getElementById('downloadBtn').style.display = 'block';
                     showMessage(`✅ ${data.count}명의 고객 정보를 불러왔습니다!`, 'success');
                 } else {
@@ -437,6 +449,37 @@
             renderTable();
         }
 
+        function saveData() {
+            if (customers.length === 0) {
+                showMessage('❌ 저장할 고객 데이터가 없습니다.', 'error');
+                return;
+            }
+
+            try {
+                localStorage.setItem('savedCustomers', JSON.stringify(customers));
+                showMessage('✅ 데이터가 저장되었습니다!', 'success');
+            } catch (error) {
+                showMessage('❌ 저장 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        function loadSavedData() {
+            try {
+                const saved = localStorage.getItem('savedCustomers');
+                if (saved) {
+                    customers = JSON.parse(saved);
+                    filteredCustomers = [...customers];
+                    renderTable();
+                    updateStats();
+                    document.getElementById('saveBtn').style.display = 'block';
+                    document.getElementById('downloadBtn').style.display = 'block';
+                    showMessage('✅ 저장된 데이터를 불러왔습니다!', 'success');
+                }
+            } catch (error) {
+                console.error('저장된 데이터 로드 오류:', error);
+            }
+        }
+
         function downloadExcel() {
             if (customers.length === 0) {
                 showMessage('❌ 다운로드할 고객 데이터가 없습니다.', 'error');
@@ -497,6 +540,7 @@
                     stats[i].querySelector('.number').textContent = '0';
                 });
 
+                document.getElementById('saveBtn').style.display = 'none';
                 document.getElementById('downloadBtn').style.display = 'none';
                 showMessage('✅ 데이터가 삭제되었습니다. Excel 파일을 업로드하세요.', 'success');
 
@@ -526,6 +570,11 @@
                 currentFilter = e.target.dataset.filter;
                 filterCustomers();
             });
+        });
+
+        // 페이지 로드 시 저장된 데이터 복원
+        window.addEventListener('load', function() {
+            loadSavedData();
         });
     </script>
 </body>
