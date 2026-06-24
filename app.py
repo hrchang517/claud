@@ -106,10 +106,17 @@ def upload_file():
                 # 상품 정보 추출 (F열)
                 prod_info = str(row1_values[5] or '').strip()
 
-                # 처리상태 추출 (E열 1번째 라인)
-                status_info = str(row1_values[4] or '').strip()
-                if status_info == '-':
-                    status_info = ''
+                # 처리상태 추출 (E열 2번째 라인 데이터)
+                status_e2 = str(row2_values[4] or '').strip() if len(row2_values) > 4 else ''
+                status_e4 = str(ws.cell(i+3, 5).value or '').strip() if i+3 <= ws.max_row else ''
+
+                # 상태 정보 조합
+                status_combined = []
+                if status_e2 and status_e2 != '-':
+                    status_combined.append(status_e2)
+                if status_e4 and status_e4 != '-':
+                    status_combined.append(status_e4)
+                status_info = ', '.join(status_combined) if status_combined else ''
 
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
