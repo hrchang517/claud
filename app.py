@@ -167,29 +167,34 @@ def download_excel():
         ws = wb.active
         ws.title = "고객데이터"
 
-        # 고객 데이터를 3행씩 추가 (업로드 형식과 동일)
+        # 고객 데이터를 4행씩 추가 (업로드 형식과 동일)
         for customer in customers:
             # 파트너를 TBG/TNC에서 원래 형식으로 변환
             partner_display = '파트너: 티비고' if customer.get('partner') == 'TBG' else '파트너: (주)티앤씨'
 
             # Row 1: 번호, 고객명, 상품 등
             row1_data = [
-                None,  # A열: 비워둠
+                None,  # A열
                 customer.get('id', ''),  # B열: #번호
                 f"{customer.get('id', '')} {customer.get('name', '')}",  # C열: #번호 이름
                 '-',  # D열: -
-                None,  # E열: (행2에서 처리상태)
-                customer.get('product', ''),  # F열: 상품
+                customer.get('product', ''),  # E열: 상품
+                None,  # F열
+                None,  # G열
+                '[환경] -'  # H열
             ]
             ws.append(row1_data)
 
-            # Row 2: 파트너 정보, 처리상태
+            # Row 2: 파트너 정보
             row2_data = [
                 None,  # A열
                 partner_display,  # B열: 파트너
                 None,  # C열
                 None,  # D열
-                customer.get('status', ''),  # E열: 처리상태
+                None,  # E열
+                None,  # F열
+                None,  # G열
+                f'[기타] {customer.get("status", "-")}'  # H열: 처리상태
             ]
             ws.append(row2_data)
 
@@ -200,6 +205,9 @@ def download_excel():
                 customer.get('phone', ''),  # C열: 연락처
             ]
             ws.append(row3_data)
+
+            # Row 4: 빈 행
+            ws.append([None] * 9)
 
         # 열 너비 자동 조정
         ws.column_dimensions['B'].width = 15
