@@ -172,23 +172,26 @@ def download_excel():
             # 파트너를 TBG/TNC에서 원래 형식으로 변환
             partner_display = '파트너: 티비고' if customer.get('partner') == 'TBG' else '파트너: (주)티앤씨'
 
-            # Row 1: 번호, 고객명, 처리상태, 상품 등
+            # Row 1: 번호, 고객명, 상품 등
             row1_data = [
                 None,  # A열: 비워둠
                 customer.get('id', ''),  # B열: #번호
                 f"{customer.get('id', '')} {customer.get('name', '')}",  # C열: #번호 이름
                 '-',  # D열: -
-                customer.get('status', ''),  # E열: 처리상태
+                None,  # E열: (행2에서 처리상태)
                 customer.get('product', ''),  # F열: 상품
                 None, None,  # G, H열
                 '[환경] -'  # H열: [환경]
             ]
             ws.append(row1_data)
 
-            # Row 2: 파트너 정보
+            # Row 2: 파트너 정보, 처리상태
             row2_data = [
                 None,  # A열
                 partner_display,  # B열: 파트너
+                None,  # C열
+                None,  # D열
+                customer.get('status', ''),  # E열: 처리상태
             ]
             ws.append(row2_data)
 
