@@ -200,13 +200,11 @@ def download_excel():
             ]
             ws.append(row2_data)
 
-            # Row 3: 연락처, 처리상태
+            # Row 3: 연락처
             row3_data = [
                 None,  # A열
                 None,  # B열
                 customer.get('phone', ''),  # C열: 연락처
-                None,  # D열
-                customer.get('status', ''),  # E열: 처리상태
             ]
             ws.append(row3_data)
 
