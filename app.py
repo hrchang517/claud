@@ -180,8 +180,6 @@ def download_excel():
                 '-',  # D열: -
                 None,  # E열: (행2에서 처리상태)
                 customer.get('product', ''),  # F열: 상품
-                None, None,  # G, H열
-                '[환경] -'  # H열: [환경]
             ]
             ws.append(row1_data)
 
