@@ -54,8 +54,8 @@ def upload_file():
         customers = []
         print("파싱 로직: C열 우선 → B열 백업\n")
 
-        # 3줄씩 처리 (고객 정보가 3줄로 구성됨)
-        for i in range(1, ws.max_row, 3):
+        # 4줄씩 처리 (고객 정보가 4줄로 구성됨: 정보 3줄 + 빈 줄 1줄)
+        for i in range(1, ws.max_row, 4):
             try:
                 row1_values = []
                 row2_values = []
