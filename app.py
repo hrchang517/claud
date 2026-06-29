@@ -109,9 +109,6 @@ def upload_file():
                 # 상품 정보 추출 (H열 1행)
                 prod_info = str(row1_values[7] or '').strip()
 
-                # 등록상태 추출 (E열 4행)
-                reg_status = str(row4_values[4] or '').strip() if len(row4_values) > 4 else ''
-
                 # 처리상태 추출 (G열 2행 + G열 4행)
                 status_g2 = str(row2_values[6] or '').strip() if len(row2_values) > 6 else ''
                 status_g4 = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
@@ -125,7 +122,6 @@ def upload_file():
                 status_info = ', '.join(status_combined) if status_combined else ''
 
                 # Row 4 데이터 추출
-                row4_e = str(row4_values[4] or '').strip() if len(row4_values) > 4 else ''
                 row4_g = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
 
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
@@ -137,8 +133,6 @@ def upload_file():
                         'partner': partner_type,
                         'product': prod_info,
                         'status': status_info,
-                        'reg_status': reg_status,  # 등록상태 (H열)
-                        'row4_e': row4_e,       # Row 4의 E열 (진행상태)
                         'row4_g': row4_g        # Row 4의 G열
                     })
                     print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
