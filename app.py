@@ -106,8 +106,11 @@ def upload_file():
                 elif '티비고' in partner_text:
                     partner_type = 'TBG'
 
-                # 상품 정보 추출 (H열)
-                prod_info = str(row1_values[7] or '').strip()
+                # 상품 정보 추출 (H열 1번째 라인에서 F열 대신 사용)
+                prod_info = str(row1_values[5] or '').strip()
+
+                # 등록상태 추출 (H열 1번째 라인)
+                reg_status = str(row1_values[7] or '').strip()
 
                 # 처리상태 추출 (E열 2번째 라인 데이터)
                 status_e2 = str(row2_values[4] or '').strip() if len(row2_values) > 4 else ''
@@ -134,6 +137,7 @@ def upload_file():
                         'partner': partner_type,
                         'product': prod_info,
                         'status': status_info,
+                        'reg_status': reg_status,  # 등록상태 (H열)
                         'row4_e': row4_e,       # Row 4의 E열 (진행상태)
                         'row4_g': row4_g        # Row 4의 G열
                     })
