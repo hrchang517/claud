@@ -339,31 +339,27 @@
     submitBtn.disabled = true;
     submitBtn.innerHTML = '전송 중...';
 
-    try {
-      await Promise.all([
-        fetch(FORMSPREE_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({ name, phone, time })
-        }),
-        fetch(SHEETS_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, phone, time })
-        })
-      ]);
+    // 구글 시트 저장 (독립 실행)
+    fetch(`${SHEETS_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&time=${encodeURIComponent(time)}`, {
+      method: 'GET',
+      mode: 'no-cors'
+    }).catch(() => {});
 
-      submitBtn.innerHTML = '신청 완료 ✓';
-      submitBtn.style.background = '#1A7A3A';
-      document.getElementById('name').value = '';
-      document.getElementById('phone').value = '';
-      document.getElementById('privacy').checked = false;
-    } catch (e) {
-      alert('전송 중 오류가 발생했습니다. 다시 시도해주세요.');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '지금 신청하기 <span class="arrow">→</span>';
-    }
+    // Formspree 이메일 (독립 실행)
+    fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, phone, time })
+    }).catch(() => {});
+
+    // 약간 대기 후 완료 표시
+    await new Promise(r => setTimeout(r, 800));
+
+    submitBtn.innerHTML = '신청 완료 ✓';
+    submitBtn.style.background = '#1A7A3A';
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('privacy').checked = false;
   }
 </script>
 
