@@ -317,21 +317,53 @@
 </div>
 
 <script>
+  const FORMSPREE_URL = 'https://formspree.io/f/xwvdqvyl';
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwtu_yp5BfnmYcUirqNXBP8zETJ32IE5LoJINxyXhhnSJFg8ltKzsBScRVIWZ5A55hHCQ/exec';
+
   function selectTime(btn) {
     btn.closest('.time-options').querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const privacy = document.getElementById('privacy').checked;
+    const time = document.querySelector('.time-btn.active')?.textContent || '언제든';
 
     if (!name) { alert('성함을 입력해주세요.'); document.getElementById('name').focus(); return; }
     if (!phone) { alert('연락처를 입력해주세요.'); document.getElementById('phone').focus(); return; }
     if (!privacy) { alert('개인정보 수집·이용에 동의해주세요.'); return; }
 
-    alert('신청이 완료되었습니다! 곧 연락드리겠습니다 😊');
+    const submitBtn = document.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '전송 중...';
+
+    try {
+      await Promise.all([
+        fetch(FORMSPREE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ name, phone, time })
+        }),
+        fetch(SHEETS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, time })
+        })
+      ]);
+
+      submitBtn.innerHTML = '신청 완료 ✓';
+      submitBtn.style.background = '#1A7A3A';
+      document.getElementById('name').value = '';
+      document.getElementById('phone').value = '';
+      document.getElementById('privacy').checked = false;
+    } catch (e) {
+      alert('전송 중 오류가 발생했습니다. 다시 시도해주세요.');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '지금 신청하기 <span class="arrow">→</span>';
+    }
   }
 </script>
 
