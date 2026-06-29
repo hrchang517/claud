@@ -106,22 +106,22 @@ def upload_file():
                 elif '티비고' in partner_text:
                     partner_type = 'TBG'
 
-                # 상품 정보 추출 (H열 1번째 라인에서 F열 대신 사용)
-                prod_info = str(row1_values[5] or '').strip()
+                # 상품 정보 추출 (H열 1행)
+                prod_info = str(row1_values[7] or '').strip()
 
-                # 등록상태 추출 (H열 1번째 라인)
-                reg_status = str(row1_values[7] or '').strip()
+                # 등록상태 추출 (E열 4행)
+                reg_status = str(row4_values[4] or '').strip() if len(row4_values) > 4 else ''
 
-                # 처리상태 추출 (E열 2번째 라인 데이터)
-                status_e2 = str(row2_values[4] or '').strip() if len(row2_values) > 4 else ''
-                status_e4 = str(ws.cell(i+3, 5).value or '').strip() if i+3 <= ws.max_row else ''
+                # 처리상태 추출 (G열 2행 + G열 4행)
+                status_g2 = str(row2_values[6] or '').strip() if len(row2_values) > 6 else ''
+                status_g4 = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
 
                 # 상태 정보 조합
                 status_combined = []
-                if status_e2 and status_e2 != '-':
-                    status_combined.append(status_e2)
-                if status_e4 and status_e4 != '-':
-                    status_combined.append(status_e4)
+                if status_g2 and status_g2 != '-':
+                    status_combined.append(status_g2)
+                if status_g4 and status_g4 != '-':
+                    status_combined.append(status_g4)
                 status_info = ', '.join(status_combined) if status_combined else ''
 
                 # Row 4 데이터 추출
