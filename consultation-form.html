@@ -322,10 +322,11 @@
   }
 
   async function handleSubmit() {
+    const product = document.getElementById('product').value.trim();
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const privacy = document.getElementById('privacy').checked;
-    const time = document.querySelector('.time-btn.active')?.textContent || '언제든';
+    const time = document.querySelector('.time-btn.active')?.textContent || '오전중';
 
     if (!name) { alert('성함을 입력해주세요.'); document.getElementById('name').focus(); return; }
     if (!phone) { alert('연락처를 입력해주세요.'); document.getElementById('phone').focus(); return; }
@@ -336,7 +337,7 @@
     submitBtn.innerHTML = '전송 중...';
 
     // 구글 시트 저장 (독립 실행)
-    fetch(`${SHEETS_URL}?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&time=${encodeURIComponent(time)}`, {
+    fetch(`${SHEETS_URL}?product=${encodeURIComponent(product)}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&time=${encodeURIComponent(time)}`, {
       method: 'GET',
       mode: 'no-cors'
     }).catch(() => {});
@@ -345,7 +346,7 @@
     fetch(FORMSPREE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ name, phone, time })
+      body: JSON.stringify({ product, name, phone, time })
     }).catch(() => {});
 
     // 약간 대기 후 완료 표시
@@ -353,6 +354,7 @@
 
     submitBtn.innerHTML = '신청 완료 ✓';
     submitBtn.style.background = '#1A7A3A';
+    document.getElementById('product').value = '';
     document.getElementById('name').value = '';
     document.getElementById('phone').value = '';
     document.getElementById('privacy').checked = false;
