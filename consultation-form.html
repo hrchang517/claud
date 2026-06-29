@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>30초 상담 신청</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      background: #F0F3FA;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      border: 1.5px solid #DDE3F0;
+      max-width: 420px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(28, 43, 74, 0.08);
+    }
+
+    .card-body {
+      padding: 32px 28px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #EEF3FF;
+      color: #2B5BE8;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 99px;
+      width: fit-content;
+      margin-bottom: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .heading {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1C2B4A;
+      line-height: 1.3;
+      text-wrap: balance;
+      margin-bottom: 4px;
+      letter-spacing: -0.03em;
+    }
+
+    .heading-accent {
+      color: #2B5BE8;
+      display: block;
+    }
+
+    .subtext {
+      font-size: 14px;
+      color: #6B7A96;
+      line-height: 1.65;
+      margin-bottom: 28px;
+      letter-spacing: -0.01em;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1C2B4A;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .field input {
+      width: 100%;
+      border: 1.5px solid #E8EBF2;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #1C2B4A;
+      background: #F8FAFD;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      letter-spacing: -0.01em;
+    }
+
+    .field input::placeholder { color: #B0BAD0; }
+
+    .field input:focus {
+      border-color: #2B5BE8;
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(43, 91, 232, 0.1);
+    }
+
+    .time-field { margin-bottom: 20px; }
+
+    .time-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1C2B4A;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .time-options { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .time-btn {
+      padding: 10px 18px;
+      border-radius: 99px;
+      border: 1.5px solid #E8EBF2;
+      background: #FFFFFF;
+      font-size: 14px;
+      font-weight: 500;
+      color: #4A5870;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.16s;
+      letter-spacing: -0.01em;
+      user-select: none;
+    }
+
+    .time-btn:hover { border-color: #2B5BE8; color: #2B5BE8; }
+
+    .time-btn.active {
+      background: #1C2B4A;
+      border-color: #1C2B4A;
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    .consent {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 24px;
+      cursor: pointer;
+    }
+
+    .consent input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      border: 1.5px solid #C8D0E0;
+      border-radius: 5px;
+      background: #FFFFFF;
+      cursor: pointer;
+      margin-top: 1px;
+      transition: all 0.16s;
+      position: relative;
+    }
+
+    .consent input[type="checkbox"]:checked {
+      background: #2B5BE8;
+      border-color: #2B5BE8;
+    }
+
+    .consent input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .consent-text {
+      font-size: 13px;
+      color: #6B7A96;
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: #1C2B4A;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: -0.02em;
+      transition: background 0.18s, transform 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .submit-btn:hover { background: #2B5BE8; }
+    .submit-btn:active { transform: scale(0.98); }
+
+    .submit-btn .arrow {
+      font-size: 18px;
+      transition: transform 0.18s;
+      display: inline-block;
+    }
+
+    .submit-btn:hover .arrow { transform: translateX(3px); }
+
+    .social-proof {
+      text-align: center;
+      font-size: 13.5px;
+      color: #8A96AE;
+      letter-spacing: -0.01em;
+    }
+
+    .social-proof strong { color: #1C2B4A; font-weight: 700; }
+
+    .card-footer {
+      border-top: 1px solid #EEF1F8;
+      background: #F8FAFD;
+      padding: 16px 28px;
+    }
+
+    .top-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: 14px;
+      color: #8A96AE;
+      cursor: pointer;
+      padding: 0;
+      text-align: center;
+      letter-spacing: -0.01em;
+      transition: color 0.16s;
+    }
+
+    .top-btn:hover { color: #1C2B4A; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-body">
+
+    <span class="badge">🍀 30초 상담</span>
+
+    <h1 class="heading">
+      아직 고민 중이세요?
+      <span class="heading-accent">같이 골라드릴게요.</span>
+    </h1>
+    <p class="subtext">성함과 연락처만 남겨주시면 상담원이 가장 유리한 조건을 직접 확인해드립니다.</p>
+
+    <div class="field">
+      <label class="field-label" for="name">✏️ 성함</label>
+      <input type="text" id="name" placeholder="홍길동" autocomplete="name">
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="phone">📞 연락처</label>
+      <input type="tel" id="phone" placeholder="010-0000-0000" autocomplete="tel">
+    </div>
+
+    <div class="time-field">
+      <div class="time-label">🕐 연락 받기 좋은 시간</div>
+      <div class="time-options">
+        <button class="time-btn active" type="button" onclick="selectTime(this)">언제든</button>
+        <button class="time-btn" type="button" onclick="selectTime(this)">점심 후</button>
+        <button class="time-btn" type="button" onclick="selectTime(this)">저녁 6시 이후</button>
+      </div>
+    </div>
+
+    <label class="consent">
+      <input type="checkbox" id="privacy">
+      <span class="consent-text">(필수) 개인정보 수집·이용 동의 — 상담에만 쓰고 통화 후 바로 파기해요</span>
+    </label>
+
+    <button class="submit-btn" type="button" onclick="handleSubmit()">
+      지금 신청하기 <span class="arrow">→</span>
+    </button>
+
+    <p class="social-proof">오늘 <strong>84명</strong>이 함께 상담받았어요 ✨</p>
+
+  </div>
+
+  <div class="card-footer">
+    <button class="top-btn" type="button" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+      ↑ 맨 위로 가기
+    </button>
+  </div>
+</div>
+
+<script>
+  function selectTime(btn) {
+    btn.closest('.time-options').querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function handleSubmit() {
+    const name = document.getElementById('name').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const privacy = document.getElementById('privacy').checked;
+
+    if (!name) { alert('성함을 입력해주세요.'); document.getElementById('name').focus(); return; }
+    if (!phone) { alert('연락처를 입력해주세요.'); document.getElementById('phone').focus(); return; }
+    if (!privacy) { alert('개인정보 수집·이용에 동의해주세요.'); return; }
+
+    alert('신청이 완료되었습니다! 곧 연락드리겠습니다 😊');
+  }
+</script>
+
+</body>
+</html>
