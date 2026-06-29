@@ -186,7 +186,9 @@ def download_excel():
                 f"{customer.get('id', '')} {customer.get('name', '')}",  # C열: #번호 이름
                 '-',  # D열: -
                 None,  # E열
-                customer.get('product', ''),  # F열: 상품
+                None,  # F열
+                None,  # G열
+                customer.get('product', ''),  # H열: 상품
             ]
             ws.append(row1_data)
 
@@ -196,7 +198,9 @@ def download_excel():
                 partner_display,  # B열: 파트너
                 None,  # C열
                 None,  # D열
-                customer.get('status', ''),  # E열: 처리상태
+                None,  # E열
+                None,  # F열
+                customer.get('status', ''),  # G열: 처리상태
             ]
             ws.append(row2_data)
 
