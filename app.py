@@ -60,6 +60,7 @@ def upload_file():
                 row1_values = []
                 row2_values = []
                 row3_values = []
+                row4_values = []
 
                 # 행 데이터 추출
                 for j in range(1, 13):
@@ -68,6 +69,8 @@ def upload_file():
                         row2_values.append(ws.cell(i+1, j).value)
                     if i+2 <= ws.max_row:
                         row3_values.append(ws.cell(i+2, j).value)
+                    if i+3 <= ws.max_row:
+                        row4_values.append(ws.cell(i+3, j).value)
 
                 # ======= C열 우선 파싱 =======
                 # C열(1줄째 C칼럼) 데이터 추출
@@ -118,6 +121,10 @@ def upload_file():
                     status_combined.append(status_e4)
                 status_info = ', '.join(status_combined) if status_combined else ''
 
+                # Row 4 데이터 추출
+                row4_e = str(row4_values[4] or '').strip() if len(row4_values) > 4 else ''
+                row4_g = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
+
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
                     customers.append({
@@ -126,7 +133,9 @@ def upload_file():
                         'phone': phone_num,     # 전화번호
                         'partner': partner_type,
                         'product': prod_info,
-                        'status': status_info
+                        'status': status_info,
+                        'row4_e': row4_e,       # Row 4의 E열 (진행상태)
+                        'row4_g': row4_g        # Row 4의 G열
                     })
                     print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
                 else:
@@ -212,8 +221,17 @@ def download_excel():
             ]
             ws.append(row3_data)
 
-            # Row 4: 빈 행
-            ws.append([None] * 9)
+            # Row 4: E(진행상태) | G(처리상태)
+            row4_data = [
+                None,  # A열
+                None,  # B열
+                None,  # C열
+                None,  # D열
+                customer.get('row4_e', ''),  # E열: 진행상태
+                None,  # F열
+                customer.get('row4_g', ''),  # G열: 처리상태
+            ]
+            ws.append(row4_data)
 
         # 열 너비 자동 조정
         ws.column_dimensions['B'].width = 15
