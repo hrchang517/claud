@@ -295,7 +295,7 @@
     <div class="time-field">
       <div class="time-label">🕐 연락 받기 좋은 시간</div>
       <div class="time-options">
-        <button class="time-btn  type="button" onclick="selectTime(this)">오전중</button>
+        <button class="time-btn active" type="button" onclick="selectTime(this)">오전중</button>
         <button class="time-btn" type="button" onclick="selectTime(this)">2시~4시</button>
         <button class="time-btn" type="button" onclick="selectTime(this)">4시~6시</button>
       </div>
@@ -322,7 +322,6 @@
   }
 
   async function handleSubmit() {
-    const name = document.getElementById('priduct').value.trim();
     const name = document.getElementById('name').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const privacy = document.getElementById('privacy').checked;
@@ -354,7 +353,6 @@
 
     submitBtn.innerHTML = '신청 완료 ✓';
     submitBtn.style.background = '#1A7A3A';
-    document.getElementById('product').value = '';
     document.getElementById('name').value = '';
     document.getElementById('phone').value = '';
     document.getElementById('privacy').checked = false;
