@@ -109,20 +109,17 @@ def upload_file():
                 # 상품 정보 추출 (H열 1행)
                 prod_info = str(row1_values[7] or '').strip()
 
-                # 처리상태 추출 (G열 2행 + G열 4행)
-                status_g2 = str(row2_values[6] or '').strip() if len(row2_values) > 6 else ''
-                status_g4 = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
+                # 처리상태 추출 (G열 1행 + G열 3행)
+                status_g1 = str(row1_values[6] or '').strip() if len(row1_values) > 6 else ''
+                status_g3 = str(row3_values[6] or '').strip() if len(row3_values) > 6 else ''
 
                 # 상태 정보 조합
                 status_combined = []
-                if status_g2 and status_g2 != '-':
-                    status_combined.append(status_g2)
-                if status_g4 and status_g4 != '-':
-                    status_combined.append(status_g4)
+                if status_g1 and status_g1 != '-':
+                    status_combined.append(status_g1)
+                if status_g3 and status_g3 != '-':
+                    status_combined.append(status_g3)
                 status_info = ', '.join(status_combined) if status_combined else ''
-
-                # Row 4 데이터 추출
-                row4_g = str(row4_values[6] or '').strip() if len(row4_values) > 6 else ''
 
                 # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                 if display_num and cust_name and phone_num:
@@ -132,8 +129,7 @@ def upload_file():
                         'phone': phone_num,     # 전화번호
                         'partner': partner_type,
                         'product': prod_info,
-                        'status': status_info,
-                        'row4_g': row4_g        # Row 4의 G열
+                        'status': status_info
                     })
                     print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
                 else:
