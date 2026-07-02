@@ -82,8 +82,8 @@ def upload_file():
                         # 각 행의 데이터 수집
                         c_val = str(ws.cell(j, 3).value or '').strip()
                         e_val = str(ws.cell(j, 5).value or '').strip()
-                        f_val = str(ws.cell(j, 6).value or '').strip()
                         g_val = str(ws.cell(j, 7).value or '').strip()
+                        h_val = str(ws.cell(j, 8).value or '').strip()
                         b_val_current = str(b_next or '').strip()
 
                         rows_data.append({
@@ -91,13 +91,13 @@ def upload_file():
                             'b': b_val_current,
                             'c': c_val,
                             'e': e_val,
-                            'f': f_val,
-                            'g': g_val
+                            'g': g_val,
+                            'h': h_val
                         })
                         j += 1
 
                     # 수집된 행들에서 필요한 정보 추출
-                    for row_info in rows_data:
+                    for idx, row_info in enumerate(rows_data):
                         # 이름 추출 (C열에서 #xxx 형식)
                         if not cust_name and row_info['c'] and '#' in row_info['c']:
                             parts = row_info['c'].split(' ', 1)
@@ -115,16 +115,26 @@ def upload_file():
                             elif '티비고' in row_info['b']:
                                 partner_type = 'TBG'
 
-                        # 상품 정보 추출 (F열 첫 번째 값, 상품명만)
-                        if not prod_info and row_info['f'] and not row_info['f'].startswith('[주소]'):
-                            prod_info = row_info['f']
+                        # 상품 정보 추출 (H열 첫 번째 행만)
+                        if not prod_info and idx == 0 and row_info['h']:
+                            prod_info = row_info['h']
 
-                        # 처리상태 추출 (G열 값들 수집)
-                        if row_info['g'] and row_info['g'] != '-':
-                            if status_info:
-                                status_info += ', ' + row_info['g']
-                            else:
-                                status_info = row_info['g']
+                    # 처리상태 추출 (G열 1행 + G열 3행)
+                    g1_status = ''
+                    g3_status = ''
+                    for idx, row_info in enumerate(rows_data):
+                        if idx == 0 and row_info['g']:
+                            g1_status = row_info['g']
+                        if idx == 2 and row_info['g']:
+                            g3_status = row_info['g']
+
+                    # G열 1행과 3행 조합
+                    status_combined = []
+                    if g1_status and g1_status != '-':
+                        status_combined.append(g1_status)
+                    if g3_status and g3_status != '-':
+                        status_combined.append(g3_status)
+                    status_info = ', '.join(status_combined) if status_combined else ''
 
                     # 번호, 고객명, 전화번호가 모두 있을 때만 저장
                     if display_num and cust_name and phone_num:
