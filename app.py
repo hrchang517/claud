@@ -52,93 +52,101 @@ def upload_file():
         print(f"최대 행: {ws.max_row}, 최대 열: {ws.max_column}")
 
         customers = []
-        print("파싱 로직: C열 우선 → B열 백업\n")
+        print("파싱 로직: B열 #숫자 기준\n")
 
-        # 4줄씩 처리 (고객 정보가 4줄로 구성됨: 정보 3줄 + 빈 줄 1줄)
-        for i in range(1, ws.max_row, 4):
+        # B열의 #숫자 기준으로 고객 정보 추출
+        i = 1
+        while i <= ws.max_row:
             try:
-                row1_values = []
-                row2_values = []
-                row3_values = []
-                row4_values = []
+                b_val = ws.cell(i, 2).value
 
-                # 행 데이터 추출
-                for j in range(1, 13):
-                    row1_values.append(ws.cell(i, j).value)
-                    if i+1 <= ws.max_row:
-                        row2_values.append(ws.cell(i+1, j).value)
-                    if i+2 <= ws.max_row:
-                        row3_values.append(ws.cell(i+2, j).value)
-                    if i+3 <= ws.max_row:
-                        row4_values.append(ws.cell(i+3, j).value)
+                # B열에 #숫자가 있으면 새로운 고객 레코드 시작
+                if b_val and isinstance(b_val, str) and b_val.startswith('#'):
+                    display_num = b_val  # 번호: B열의 #숫자
+                    cust_name = ''
+                    phone_num = ''
+                    partner_type = '-'
+                    prod_info = ''
+                    status_info = ''
 
-                # ======= C열 우선 파싱 =======
-                # C열(1줄째 C칼럼) 데이터 추출
-                # 예: "#102 이선아"
-                customer_raw = str(row1_values[2] or '').strip()
+                    # B열이 바뀔 때까지 같은 고객 정보 수집
+                    j = i
+                    rows_data = []
 
-                display_num = ''  # 번호 칼럼에 들어갈 값 (#102)
-                cust_name = ''    # 고객명 칼럼에 들어갈 값 (이선아)
+                    while j <= ws.max_row:
+                        b_next = ws.cell(j, 2).value
+                        # B열이 바뀌면 루프 종료
+                        if j > i and b_next and isinstance(b_next, str) and b_next.startswith('#'):
+                            break
 
-                # C열에서 "#" 문자가 있으면 분리
-                if customer_raw and '#' in customer_raw:
-                    # "#102 이선아" 형식을 공백으로 분리
-                    parts = customer_raw.split(' ', 1)
-                    display_num = parts[0].strip()  # "#102"
-                    cust_name = parts[1].strip() if len(parts) > 1 else ''  # "이선아"
-                    print(f"  ✓ Row{i}: C열에서 추출 → {display_num} | {cust_name}")
+                        # 각 행의 데이터 수집
+                        c_val = str(ws.cell(j, 3).value or '').strip()
+                        e_val = str(ws.cell(j, 5).value or '').strip()
+                        f_val = str(ws.cell(j, 6).value or '').strip()
+                        g_val = str(ws.cell(j, 7).value or '').strip()
+                        b_val_current = str(b_next or '').strip()
 
-                # C열 파싱 실패시 B열 백업
-                if not display_num:
-                    id_val = str(row1_values[1] or '').strip()
-                    if id_val and '#' in id_val:
-                        display_num = id_val
-                        print(f"  ✓ Row{i}: B열 백업 → {display_num}")
+                        rows_data.append({
+                            'row': j,
+                            'b': b_val_current,
+                            'c': c_val,
+                            'e': e_val,
+                            'f': f_val,
+                            'g': g_val
+                        })
+                        j += 1
 
-                # 전화번호 추출 (3번째 줄의 C열)
-                phone_num = str(row3_values[2] or '').strip() if len(row3_values) > 2 else ''
+                    # 수집된 행들에서 필요한 정보 추출
+                    for row_info in rows_data:
+                        # 이름 추출 (C열에서 #xxx 형식)
+                        if not cust_name and row_info['c'] and '#' in row_info['c']:
+                            parts = row_info['c'].split(' ', 1)
+                            if len(parts) > 1:
+                                cust_name = parts[1]
 
-                # 파트너 정보 추출 (B열 2번째 행)
-                partner_text = str(row2_values[1] or '').strip()
-                partner_type = '-'
-                if '티앤씨' in partner_text:
-                    partner_type = 'TNC'
-                elif '티비고' in partner_text:
-                    partner_type = 'TBG'
+                        # 전화번호 추출 (C열에서 010-로 시작)
+                        if not phone_num and row_info['c'].startswith('010-'):
+                            phone_num = row_info['c']
 
-                # 상품 정보 추출 (H열 1행)
-                prod_info = str(row1_values[7] or '').strip()
+                        # 파트너 정보 추출 (B열 값이 있을 때)
+                        if partner_type == '-' and row_info['b']:
+                            if '티앤씨' in row_info['b']:
+                                partner_type = 'TNC'
+                            elif '티비고' in row_info['b']:
+                                partner_type = 'TBG'
 
-                # 처리상태 추출 (G열 1행 + G열 3행)
-                status_g1 = str(row1_values[6] or '').strip() if len(row1_values) > 6 else ''
-                status_g3 = str(row3_values[6] or '').strip() if len(row3_values) > 6 else ''
+                        # 상품 정보 추출 (F열 첫 번째 값, 상품명만)
+                        if not prod_info and row_info['f'] and not row_info['f'].startswith('[주소]'):
+                            prod_info = row_info['f']
 
-                # 상태 정보 조합
-                status_combined = []
-                if status_g1 and status_g1 != '-':
-                    status_combined.append(status_g1)
-                if status_g3 and status_g3 != '-':
-                    status_combined.append(status_g3)
-                status_info = ', '.join(status_combined) if status_combined else ''
+                        # 처리상태 추출 (G열 값들 수집)
+                        if row_info['g'] and row_info['g'] != '-':
+                            if status_info:
+                                status_info += ', ' + row_info['g']
+                            else:
+                                status_info = row_info['g']
 
-                # 번호, 고객명, 전화번호가 모두 있을 때만 저장
-                if display_num and cust_name and phone_num:
-                    customers.append({
-                        'id': display_num,      # 번호 칼럼: "#102"
-                        'name': cust_name,      # 고객명 칼럼: "이선아"
-                        'phone': phone_num,     # 전화번호
-                        'partner': partner_type,
-                        'product': prod_info,
-                        'status': status_info
-                    })
-                    print(f"    ✅ 저장 완료 → ID:{display_num} | 이름:{cust_name} | 전화:{phone_num}")
+                    # 번호, 고객명, 전화번호가 모두 있을 때만 저장
+                    if display_num and cust_name and phone_num:
+                        customers.append({
+                            'id': display_num,
+                            'name': cust_name,
+                            'phone': phone_num,
+                            'partner': partner_type,
+                            'product': prod_info,
+                            'status': status_info
+                        })
+                        print(f"  ✅ {display_num} | {cust_name} | {phone_num} | {partner_type}")
+                    else:
+                        missing = []
+                        if not display_num: missing.append("번호")
+                        if not cust_name: missing.append("이름")
+                        if not phone_num: missing.append("전화")
+                        print(f"  ⚠️  {display_num}: 누락 → {', '.join(missing)}")
+
+                    i = j  # 다음 B열 #숫자로 이동
                 else:
-                    # 데이터 누락 확인
-                    missing = []
-                    if not display_num: missing.append("번호(#)")
-                    if not cust_name: missing.append("이름")
-                    if not phone_num: missing.append("전화")
-                    print(f"    ⚠️  Row{i}: 누락된 데이터 → {', '.join(missing)}")
+                    i += 1
 
             except Exception as e:
                 print(f"  ⚠️ 행 {i} 처리 오류: {e}")
