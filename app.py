@@ -98,11 +98,22 @@ def upload_file():
 
                     # 수집된 행들에서 필요한 정보 추출
                     for idx, row_info in enumerate(rows_data):
-                        # 이름 추출 (C열에서 #xxx 형식)
+                        # 이름 추출 (C열 형식: "#이름 → #번호" 또는 "#번호 이름 → #번호")
                         if not cust_name and row_info['c'] and '#' in row_info['c']:
-                            parts = row_info['c'].split(' ', 1)
-                            if len(parts) > 1:
-                                cust_name = parts[1]
+                            if '→' in row_info['c']:
+                                # "→" 기준으로 분리 후 왼쪽 부분에서 이름 추출
+                                left_part = row_info['c'].split('→')[0].lstrip('#').strip()
+                                if ' ' in left_part:
+                                    # "#번호 이름" 형식: 공백 뒤의 이름 추출
+                                    cust_name = left_part.split(' ', 1)[1]
+                                else:
+                                    # "#이름" 형식: 그대로 사용
+                                    cust_name = left_part
+                            else:
+                                # 기존 형식: 공백으로 분리
+                                parts = row_info['c'].split(' ', 1)
+                                if len(parts) > 1:
+                                    cust_name = parts[1]
 
                         # 전화번호 추출 (C열에서 010-로 시작)
                         if not phone_num and row_info['c'].startswith('010-'):
