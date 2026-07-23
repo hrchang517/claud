@@ -1,0 +1,54 @@
+{
+  "name": "diet-guide",
+  "productName": "DietGuide",
+  "version": "1.0.0",
+  "description": "신장, 당뇨, 고혈압, 간기능, 다이어트별 맞춤 식단과 음식 정보를 확인하는 앱",
+  "main": "electron/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist": "electron-builder --mac --win"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.dietguide.app",
+    "productName": "DietGuide",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "data.js",
+      "recipes.js",
+      "manifest.json",
+      "sw.js",
+      "icons/**/*",
+      "electron/**/*"
+    ],
+    "artifactName": "맞춤건강식단가이드-${version}-${os}.${ext}",
+    "mac": {
+      "icon": "build/icon.png",
+      "target": ["dmg"],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "CFBundleDisplayName": "맞춤 건강 식단 가이드"
+      }
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "artifactName": "맞춤건강식단가이드 Setup ${version}.${ext}"
+    }
+  }
+}
