@@ -16,7 +16,37 @@ const state = {
 };
 
 const SAVE_KEY = "dietGuideSavedPlans";
+const USER_FOODS_KEY = "dietGuideUserFoods";
 let currentPlanSnapshot = null;
+
+function loadUserFoods() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_FOODS_KEY) || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveUserFoods(all) {
+  localStorage.setItem(USER_FOODS_KEY, JSON.stringify(all));
+}
+
+function getUserFoods(catKey) {
+  return loadUserFoods()[catKey] || [];
+}
+
+function addUserFood(catKey, { name, status, desc }) {
+  const all = loadUserFoods();
+  if (!all[catKey]) all[catKey] = [];
+  all[catKey].push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, status, desc });
+  saveUserFoods(all);
+}
+
+function deleteUserFood(catKey, id) {
+  const all = loadUserFoods();
+  all[catKey] = (all[catKey] || []).filter((f) => f.id !== id);
+  saveUserFoods(all);
+}
 
 function todayKey() {
   const d = new Date();
@@ -88,10 +118,13 @@ function renderResults(matches, recipeMatches, query) {
       (food) => `
       <div class="result-card ${STATUS_META[food.status].className}">
         <div style="flex:1">
-          <p class="result-name">${escapeHtml(food.name)}</p>
+          <p class="result-name">${escapeHtml(food.name)} ${food.custom ? '<span class="custom-badge">직접 추가</span>' : ""}</p>
           <p class="result-desc">${escapeHtml(food.desc)}</p>
         </div>
-        ${statusBadge(food.status)}
+        <div class="result-actions">
+          ${statusBadge(food.status)}
+          ${food.custom ? `<button type="button" class="delete-food-btn" data-delete-food="${food.id}">삭제</button>` : ""}
+        </div>
       </div>`
     )
     .join("");
@@ -115,12 +148,27 @@ function renderResults(matches, recipeMatches, query) {
         </div>
       </div>`;
 
+  const addFoodHtml =
+    matches.length > 0
+      ? ""
+      : `
+      <div class="add-food-box">
+        <p class="add-food-label">"${escapeHtml(query)}"에 대한 등록된 음식 정보가 없습니다. 직접 추가해보세요.</p>
+        <div class="status-choice-row">
+          <label><input type="radio" name="addFoodStatus" value="good" checked /> 적합</label>
+          <label><input type="radio" name="addFoodStatus" value="caution" /> 주의</label>
+          <label><input type="radio" name="addFoodStatus" value="bad" /> 부적합</label>
+        </div>
+        <textarea id="addFoodDesc" placeholder="이 음식에 대한 설명을 입력하세요 (예: 칼륨이 높아 섭취량 조절이 필요합니다)"></textarea>
+        <button type="button" class="add-food-btn" data-add-food="${escapeHtml(query)}">"${escapeHtml(query)}" 추가하기</button>
+      </div>`;
+
   if (matches.length === 0 && recipeMatches.length === 0) {
-    results.innerHTML = `<div class="empty-state">"${escapeHtml(query)}"에 대한 등록된 음식 정보가 없습니다. 다른 음식을 검색해보세요.</div>`;
+    results.innerHTML = addFoodHtml;
     return;
   }
 
-  results.innerHTML = verdictHtml + recipeHtml;
+  results.innerHTML = verdictHtml + recipeHtml + addFoodHtml;
 }
 
 function searchRecipeDb(query, excludeNames) {
@@ -152,7 +200,11 @@ function doSearch() {
     return;
   }
   const q = query.toLowerCase();
-  const matches = cat.foods.filter((f) => f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase()));
+  const curatedMatches = cat.foods.filter((f) => f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase()));
+  const userMatches = getUserFoods(state.category)
+    .filter((f) => f.name.toLowerCase().includes(q) || q.includes(f.name.toLowerCase()))
+    .map((f) => ({ ...f, custom: true }));
+  const matches = [...curatedMatches, ...userMatches];
   const excludeNames = new Set(matches.map((f) => f.name));
   const recipeMatches = searchRecipeDb(query, excludeNames);
   renderResults(matches, recipeMatches, query);
@@ -343,6 +395,27 @@ function init() {
   document.getElementById("searchBtn").addEventListener("click", doSearch);
   document.getElementById("searchInput").addEventListener("keydown", (e) => {
     if (e.key === "Enter") doSearch();
+  });
+
+  document.getElementById("results").addEventListener("click", (e) => {
+    const addBtn = e.target.closest("[data-add-food]");
+    if (addBtn) {
+      const name = addBtn.dataset.addFood;
+      const desc = document.getElementById("addFoodDesc").value.trim();
+      const status = document.querySelector('input[name="addFoodStatus"]:checked').value;
+      if (!desc) {
+        document.getElementById("addFoodDesc").focus();
+        return;
+      }
+      addUserFood(state.category, { name, status, desc });
+      doSearch();
+      return;
+    }
+    const deleteBtn = e.target.closest("[data-delete-food]");
+    if (deleteBtn) {
+      deleteUserFood(state.category, deleteBtn.dataset.deleteFood);
+      doSearch();
+    }
   });
 
   document.getElementById("stageSelect").addEventListener("change", (e) => {

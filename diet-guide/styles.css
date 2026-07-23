@@ -249,6 +249,37 @@ body {
 .result-card.status-caution { border-color: #fde68a; }
 .result-card.status-bad { border-color: #fecaca; }
 
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.custom-badge {
+  display: inline-block;
+  background: var(--gray-100);
+  color: var(--gray-500);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.delete-food-btn {
+  border: none;
+  background: none;
+  color: var(--red-500);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.delete-food-btn:hover { text-decoration: underline; }
+
 .empty-state {
   padding: 24px;
   text-align: center;
@@ -257,6 +288,61 @@ body {
   border: 1px dashed var(--gray-200);
   border-radius: 14px;
 }
+
+.add-food-box {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px dashed var(--gray-200);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.add-food-label {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--gray-500);
+}
+
+.add-food-box .status-choice-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+  color: var(--gray-700);
+}
+.add-food-box .status-choice-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+#addFoodDesc {
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  font-family: inherit;
+  font-size: 0.88rem;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+#addFoodDesc:focus { outline: 2px solid var(--green-700); background: var(--white); }
+
+.add-food-btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  background: var(--green-700);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.add-food-btn:hover { background: var(--green-800); }
 
 .recipe-search-section { margin-top: 8px; }
 .recipe-search-section:first-child { margin-top: 0; }
