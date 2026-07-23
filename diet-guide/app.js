@@ -35,16 +35,24 @@ function getUserFoods(catKey) {
   return loadUserFoods()[catKey] || [];
 }
 
-function addUserFood(catKey, { name, status, desc }) {
+// perCategory: { [categoryKey]: { status, desc } } — one verdict per condition,
+// all sharing the same id so a single delete removes it everywhere.
+function addUserFood(name, perCategory) {
   const all = loadUserFoods();
-  if (!all[catKey]) all[catKey] = [];
-  all[catKey].push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name, status, desc });
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  for (const catKey of Object.keys(CATEGORIES)) {
+    if (!all[catKey]) all[catKey] = [];
+    const entry = perCategory[catKey];
+    all[catKey].push({ id, name, status: entry.status, desc: entry.desc });
+  }
   saveUserFoods(all);
 }
 
-function deleteUserFood(catKey, id) {
+function deleteUserFood(id) {
   const all = loadUserFoods();
-  all[catKey] = (all[catKey] || []).filter((f) => f.id !== id);
+  for (const catKey of Object.keys(all)) {
+    all[catKey] = all[catKey].filter((f) => f.id !== id);
+  }
   saveUserFoods(all);
 }
 
@@ -153,14 +161,27 @@ function renderResults(matches, recipeMatches, query) {
       ? ""
       : `
       <div class="add-food-box">
-        <p class="add-food-label">"${escapeHtml(query)}"에 대한 등록된 음식 정보가 없습니다. 직접 추가해보세요.</p>
-        <div class="status-choice-row">
-          <label><input type="radio" name="addFoodStatus" value="good" checked /> 적합</label>
-          <label><input type="radio" name="addFoodStatus" value="caution" /> 주의</label>
-          <label><input type="radio" name="addFoodStatus" value="bad" /> 부적합</label>
+        <p class="add-food-label">"${escapeHtml(query)}"에 대한 등록된 음식 정보가 없습니다.</p>
+        <p class="add-food-fetch-status" id="addFoodFetchStatus">🔍 인터넷에서 정보를 찾는 중...</p>
+        <textarea id="addFoodDesc" placeholder="기본 설명 (참고용 — 아래에서 카테고리별 이유를 따로 적지 않으면 이 설명이 그대로 쓰입니다)"></textarea>
+        <p class="status-choice-label">아래 5개 조건 각각에 대해 장단점을 확인하고 등급을 선택하세요</p>
+        <div class="category-verdict-rows">
+          ${Object.entries(CATEGORIES)
+            .map(
+              ([key, cat]) => `
+            <div class="category-verdict-row" data-cat-row="${key}">
+              <p class="category-verdict-label">${iconSvg(cat.icon)} ${cat.label}</p>
+              <div class="status-choice-row">
+                <label><input type="radio" name="status-${key}" value="good" /> 적합</label>
+                <label><input type="radio" name="status-${key}" value="caution" /> 주의</label>
+                <label><input type="radio" name="status-${key}" value="bad" /> 부적합</label>
+              </div>
+              <input type="text" class="category-reason-input" data-cat-reason="${key}" placeholder="${cat.label}에서의 이유 (선택 — 비우면 기본 설명 사용)" />
+            </div>`
+            )
+            .join("")}
         </div>
-        <textarea id="addFoodDesc" placeholder="이 음식에 대한 설명을 입력하세요 (예: 칼륨이 높아 섭취량 조절이 필요합니다)"></textarea>
-        <button type="button" class="add-food-btn" data-add-food="${escapeHtml(query)}">"${escapeHtml(query)}" 추가하기</button>
+        <button type="button" class="add-food-btn" data-add-food="${escapeHtml(query)}">"${escapeHtml(query)}" 모든 카테고리에 추가하기</button>
       </div>`;
 
   if (matches.length === 0 && recipeMatches.length === 0) {
@@ -208,6 +229,43 @@ function doSearch() {
   const excludeNames = new Set(matches.map((f) => f.name));
   const recipeMatches = searchRecipeDb(query, excludeNames);
   renderResults(matches, recipeMatches, query);
+
+  if (matches.length === 0) {
+    autoFillFoodDescription(query);
+  }
+}
+
+// Looks up a plain-language summary from Korean Wikipedia's public REST API
+// (no key needed, CORS-enabled) to help pre-fill the description. The user
+// still has to read it and pick 적합/주의/부적합 themselves — this never
+// guesses the health verdict on its own.
+async function fetchWikiSummary(name) {
+  try {
+    const res = await fetch(`https://ko.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.extract || data.type === "disambiguation") return null;
+    return data.extract;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function autoFillFoodDescription(query) {
+  const extract = await fetchWikiSummary(query);
+
+  // The user may have searched something else while this was in flight.
+  if (document.getElementById("searchInput").value.trim() !== query) return;
+  const statusEl = document.getElementById("addFoodFetchStatus");
+  const textarea = document.getElementById("addFoodDesc");
+  if (!statusEl || !textarea) return;
+
+  if (extract) {
+    textarea.value = extract.length > 160 ? extract.slice(0, 160).trim() + "…" : extract;
+    statusEl.textContent = "🔍 인터넷에서 가져온 설명입니다. 내용을 확인하고 필요하면 수정한 뒤, 아래 5개 조건별로 등급을 선택하세요.";
+  } else {
+    statusEl.textContent = "인터넷에서 관련 정보를 찾지 못했습니다. 아래에 직접 설명을 입력해주세요.";
+  }
 }
 
 function renderChips() {
@@ -401,19 +459,32 @@ function init() {
     const addBtn = e.target.closest("[data-add-food]");
     if (addBtn) {
       const name = addBtn.dataset.addFood;
-      const desc = document.getElementById("addFoodDesc").value.trim();
-      const status = document.querySelector('input[name="addFoodStatus"]:checked').value;
-      if (!desc) {
+      const baseDesc = document.getElementById("addFoodDesc").value.trim();
+      if (!baseDesc) {
         document.getElementById("addFoodDesc").focus();
         return;
       }
-      addUserFood(state.category, { name, status, desc });
+
+      const perCategory = {};
+      for (const catKey of Object.keys(CATEGORIES)) {
+        const statusInput = document.querySelector(`input[name="status-${catKey}"]:checked`);
+        if (!statusInput) {
+          document.getElementById("addFoodFetchStatus").textContent = `"${CATEGORIES[catKey].label}" 조건의 등급을 아직 선택하지 않았습니다. 5개 조건 모두 확인 후 선택해주세요.`;
+          document.querySelector(`[data-cat-row="${catKey}"]`).scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        const reasonInput = document.querySelector(`[data-cat-reason="${catKey}"]`);
+        const reason = reasonInput.value.trim();
+        perCategory[catKey] = { status: statusInput.value, desc: reason || baseDesc };
+      }
+
+      addUserFood(name, perCategory);
       doSearch();
       return;
     }
     const deleteBtn = e.target.closest("[data-delete-food]");
     if (deleteBtn) {
-      deleteUserFood(state.category, deleteBtn.dataset.deleteFood);
+      deleteUserFood(deleteBtn.dataset.deleteFood);
       doSearch();
     }
   });

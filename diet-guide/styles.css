@@ -298,8 +298,20 @@ body {
 }
 
 .add-food-label {
-  margin: 0 0 14px;
+  margin: 0 0 6px;
   font-size: 0.9rem;
+  color: var(--gray-500);
+}
+
+.add-food-fetch-status {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: var(--green-800);
+}
+
+.status-choice-label {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
   color: var(--gray-500);
 }
 
@@ -331,6 +343,48 @@ body {
   margin-bottom: 12px;
 }
 #addFoodDesc:focus { outline: 2px solid var(--green-700); background: var(--white); }
+
+.category-verdict-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.category-verdict-row {
+  padding: 14px 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  background: var(--gray-50);
+}
+
+.category-verdict-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gray-900);
+}
+.category-verdict-label .icon { width: 16px; height: 16px; color: var(--green-700); }
+
+.category-verdict-row .status-choice-row {
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.category-reason-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.category-reason-input:focus { outline: 2px solid var(--green-700); }
 
 .add-food-btn {
   padding: 10px 22px;
